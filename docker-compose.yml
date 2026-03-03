@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    ports:
+      - "8501:8501"
+    volumes:
+      - .:/app  # Live-reloads your code as you type
+    depends_on:
+      - db
+    env_file:
+      - .env  # Gives Streamlit/Python access to the DB credentials
+
+  db:
+    image: postgres:15
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+      - "5442:5432"  # Custom port 5442 to avoid your WSL/Windows conflicts
+    volumes:
+      - omnipulse_db_data:/var/lib/postgresql/data
+
+volumes:
+  omnipulse_db_data:

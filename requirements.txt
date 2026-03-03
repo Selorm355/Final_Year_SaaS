@@ -1,0 +1,6 @@
+streamlit
+pandas
+scikit-learn
+psycopg2-binary
+dbt-postgres
+requests
