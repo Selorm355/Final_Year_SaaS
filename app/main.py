@@ -1,29 +1,47 @@
 import streamlit as st
+import auth  # Imports the new file we just created
 
 # Set page configuration
 st.set_page_config(page_title="OmniPulse Analytics", page_icon="📊", layout="wide")
 
+# Initialize session state for login tracking if it doesn't exist yet
+if "logged_in" not in st.session_state:
+    st.session_state["logged_in"] = False
+
 # Sidebar Navigation
 st.sidebar.title("OmniPulse SaaS")
-page = st.sidebar.radio("Navigation", ["1. Authentication", "2. Data Ingestion", "3. Processing Engine", "4. Premium Dashboard"])
+page = st.sidebar.radio("Navigation", [
+    "1. Account Access", 
+    "2. Data Ingestion", 
+    "3. Processing Engine", 
+    "4. Premium Dashboard"
+])
 
 # --- Page Routing ---
-if page == "1. Authentication":
-    st.title("🔐 Login / Register")
-    st.write("Welcome! Please log in or register your company to continue.")
-    # We will build the login form here next
+if page == "1. Account Access":
+    # Call the function from auth.py instead of writing it all here
+    auth.show_auth_page()
 
 elif page == "2. Data Ingestion":
     st.title("📥 Upload Raw Data")
-    st.write("Upload your standard CSV file based on your industry (Retail, Telecom, Healthcare).")
-    # We will build the Pandas validation and DB upload here
+    if not st.session_state["logged_in"]:
+        st.warning("⚠️ Please log in from the Account Access page first.")
+    else:
+        st.write(f"Welcome! Upload your standard CSV file for the **{st.session_state['industry']}** industry.")
+        # File uploader will go here
 
 elif page == "3. Processing Engine":
     st.title("⚙️ Clean & Process Data")
-    st.write("Transform your raw data into analysis-ready format.")
-    # We will add the dbt trigger button here
+    if not st.session_state["logged_in"]:
+        st.warning("⚠️ Please log in first.")
+    else:
+        st.write("Transform your raw data into analysis-ready format.")
+        # dbt trigger will go here
 
 elif page == "4. Premium Dashboard":
     st.title("📈 AI Forecasting & Analytics")
-    st.write("Unlock premium insights and revenue predictions.")
-    # We will add the Paystack logic and Scikit-Learn charts here
+    if not st.session_state["logged_in"]:
+        st.warning("⚠️ Please log in first.")
+    else:
+        st.write("Unlock premium insights and revenue predictions.")
+        # Charts and AI logic will go here
