@@ -1,5 +1,15 @@
 import streamlit as st
 import re
+import user_connection  # Imports your new database manager
+
+# --- Logic: Email Validator ---
+def is_valid_email(email):
+    """Checks if the email follows a standard format (e.g., name@domain.com)"""
+    # This Regex looks for characters, an @ symbol, characters, a dot, and characters
+    regex = r"^[\w\.-]+@[\w\.-]+\.\w+$"
+    if re.match(regex, email):
+        return True
+    return False
 
 # --- Logic: Password Complexity Checker ---
 def is_password_strong(password):
@@ -40,15 +50,27 @@ def show_auth_page():
         submit_register = st.form_submit_button("Register Account")
         
         if submit_register:
-            if reg_password != reg_password_confirm:
+            # 1. Check if email is a real format
+            if not is_valid_email(reg_email):
+                st.error("Please enter a valid email address.")
+            # 2. Check if passwords match
+            elif reg_password != reg_password_confirm:
                 st.error("Passwords do not match!")
             else:
+                # 3. Check if password is secure
                 is_valid, message = is_password_strong(reg_password)
                 if not is_valid:
                     st.error(message)
                 else:
-                    # TODO: Database insertion will go here later
-                    st.success(f"Success! {reg_company_name} registered under {reg_industry}. (Database linking coming soon)")
+                    # 4. Send to Database!
+                    success, db_message = user_connection.register_user(
+                        reg_company_name, reg_email, reg_industry, reg_password
+                    )
+                    
+                    if success:
+                        st.success(db_message)
+                    else:
+                        st.error(db_message) # Shows error if email already exists
 
     st.divider() # Creates a clean visual line between the forms
 
@@ -64,12 +86,19 @@ def show_auth_page():
         submit_login = st.form_submit_button("Log In")
         
         if submit_login:
-            # TODO: Database verification will go here later
-            # For now, we simulate a successful login to test Session State
             if login_email and login_password:
-                st.session_state["logged_in"] = True
-                st.session_state["company_id"] = "DEMO-101" # Placeholder
-                st.session_state["industry"] = "Retail" # Placeholder
-                st.success("Login successful! You can now navigate to Data Ingestion.")
+                # 1. Verify with Database!
+                success, user_data = user_connection.authenticate_user(login_email, login_password)
+                
+                if success:
+                    # 2. Save their real data into the Session Memory
+                    st.session_state["logged_in"] = True
+                    st.session_state["company_id"] = user_data["company_id"]
+                    st.session_state["industry"] = user_data["industry"]
+                    st.session_state["company_name"] = user_data["company_name"]
+                    
+                    st.success(f"Welcome back, {user_data['company_name']}! You can now navigate to Data Ingestion.")
+                else:
+                    st.error("Invalid email or password.")
             else:
                 st.error("Please enter both email and password.")

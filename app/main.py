@@ -1,5 +1,13 @@
 import streamlit as st
-import auth  # Imports the new file we just created
+import auth  
+import user_connection # Imports your new database manager
+
+# --- Database Initialization ---
+# This runs once when the app starts to ensure the users table exists
+try:
+    user_connection.init_db()
+except Exception as e:
+    st.error(f"Failed to connect to the database: {e}")
 
 # Set page configuration
 st.set_page_config(page_title="OmniPulse Analytics", page_icon="📊", layout="wide")
@@ -19,7 +27,6 @@ page = st.sidebar.radio("Navigation", [
 
 # --- Page Routing ---
 if page == "1. Account Access":
-    # Call the function from auth.py instead of writing it all here
     auth.show_auth_page()
 
 elif page == "2. Data Ingestion":
