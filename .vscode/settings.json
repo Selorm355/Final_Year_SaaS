@@ -1,0 +1,15 @@
+{
+    "sqltools.connections": [
+        {
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "localhost",
+            "port": 5442,
+            "askForPassword": true,
+            "driver": "PostgreSQL",
+            "name": "OmniiPulse Local DB",
+            "username": "admin",
+            "database": "omnipulse_core"
+        }
+    ]
+}
