@@ -5,3 +5,5 @@ psycopg2-binary
 dbt-postgres
 requests
 bcrypt
+openpyxl
+boto3

@@ -1,9 +1,9 @@
 import streamlit as st
 import auth  
-import user_connection # Imports your new database manager
+import user_connection 
+import data_ingestion # --- NEW: Import your ingestion script
 
 # --- Database Initialization ---
-# This runs once when the app starts to ensure the users table exists
 try:
     user_connection.init_db()
 except Exception as e:
@@ -30,12 +30,8 @@ if page == "1. Account Access":
     auth.show_auth_page()
 
 elif page == "2. Data Ingestion":
-    st.title("📥 Upload Raw Data")
-    if not st.session_state["logged_in"]:
-        st.warning("⚠️ Please log in from the Account Access page first.")
-    else:
-        st.write(f"Welcome! Upload your standard CSV file for the **{st.session_state['industry']}** industry.")
-        # File uploader will go here
+    # The data_ingestion script handles its own title and login warnings!
+    data_ingestion.show_ingestion_page()
 
 elif page == "3. Processing Engine":
     st.title("⚙️ Clean & Process Data")

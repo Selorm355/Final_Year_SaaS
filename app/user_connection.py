@@ -22,21 +22,25 @@ def get_connection():
         password=os.environ.get("POSTGRES_PASSWORD")
     )
 
-# --- 2. THE SELF-HEALING INIT ---
+# --- 2. THE SELF-HEALING INIT (Workspace & Billing Update) ---
 def init_db():
     conn = get_connection()
     cur = conn.cursor()
     
-    # CRITICAL FIX: recovery_key is now VARCHAR(255) to fit the 60-character bcrypt hash!
+    # Removed the UNIQUE constraint from email alone. 
+    # Added subscription tracking and a Composite Unique Constraint at the bottom.
     cur.execute("""
         CREATE TABLE IF NOT EXISTS users (
             company_id SERIAL PRIMARY KEY,
             company_name VARCHAR(255) NOT NULL,
-            email VARCHAR(255) UNIQUE NOT NULL,
+            email VARCHAR(255) NOT NULL,
             industry VARCHAR(50) NOT NULL,
             password_hash VARCHAR(255) NOT NULL,
             recovery_key VARCHAR(255) NOT NULL, 
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            subscription_tier VARCHAR(50) DEFAULT 'Free',
+            upload_count INT DEFAULT 0,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE (email, company_name) 
         );
     """)
     
@@ -49,7 +53,6 @@ def register_user(company_name, email, industry, raw_password):
     hashed_bytes = bcrypt.hashpw(raw_password.encode('utf-8'), bcrypt.gensalt())
     password_hash = hashed_bytes.decode('utf-8')
     
-    # Generate the raw key, but hash it before saving!
     raw_recovery_key = generate_recovery_key()
     key_hashed_bytes = bcrypt.hashpw(raw_recovery_key.encode('utf-8'), bcrypt.gensalt())
     recovery_key_hash = key_hashed_bytes.decode('utf-8')
@@ -62,23 +65,24 @@ def register_user(company_name, email, industry, raw_password):
             INSERT INTO users (company_name, email, industry, password_hash, recovery_key)
             VALUES (%s, %s, %s, %s, %s)
             RETURNING company_id;
-        """, (company_name, email, industry, password_hash, recovery_key_hash)) # Saving the HASH
+        """, (company_name, email, industry, password_hash, recovery_key_hash))
         
         conn.commit()
-        return True, "Registration successful!", raw_recovery_key # Returning RAW to Streamlit
+        return True, "Registration successful!", raw_recovery_key
         
     except psycopg2.errors.UniqueViolation:
         conn.rollback()
-        return False, "This email is already registered.", None
+        return False, "This Company Name is already registered under this email.", None
     finally:
         cur.close()
         conn.close()
 
-# --- 4. THE LOGIN LOGIC ---
-def authenticate_user(email, raw_password):
+# --- 4. THE LOGIN LOGIC (Workspace Update) ---
+def authenticate_user(email, company_name, raw_password):
+    # Now requires company_name to find the exact workspace
     conn = get_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor) 
-    cur.execute("SELECT * FROM users WHERE email = %s;", (email,))
+    cur.execute("SELECT * FROM users WHERE email = %s AND company_name = %s;", (email, company_name))
     user = cur.fetchone()
     cur.close()
     conn.close()
@@ -91,34 +95,30 @@ def authenticate_user(email, raw_password):
     else:
         return False, None
 
-# --- 5. THE PASSWORD RESET LOGIC ---
-def reset_password(email, raw_recovery_key, new_raw_password):
-    """Verifies the hashed recovery key and overwrites the old password."""
+# --- 5. THE PASSWORD RESET LOGIC (Workspace Update) ---
+def reset_password(email, company_name, raw_recovery_key, new_raw_password):
     conn = get_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     
-    # 1. Fetch the user by email first
-    cur.execute("SELECT * FROM users WHERE email = %s;", (email,))
+    # Locate the exact workspace
+    cur.execute("SELECT * FROM users WHERE email = %s AND company_name = %s;", (email, company_name))
     user = cur.fetchone()
     
     if not user:
         cur.close()
         conn.close()
-        return False, "Invalid Email or Recovery Key."
+        return False, "Invalid Email, Company Name, or Recovery Key."
         
-    # 2. Check if the typed recovery key matches the hashed key in the database
     if bcrypt.checkpw(raw_recovery_key.encode('utf-8'), user['recovery_key'].encode('utf-8')):
         
-        # 3. Hash the new password
         new_hashed_bytes = bcrypt.hashpw(new_raw_password.encode('utf-8'), bcrypt.gensalt())
         new_password_hash = new_hashed_bytes.decode('utf-8')
         
-        # 4. Update the database
         cur.execute("""
             UPDATE users 
             SET password_hash = %s 
-            WHERE email = %s;
-        """, (new_password_hash, email))
+            WHERE email = %s AND company_name = %s;
+        """, (new_password_hash, email, company_name))
         
         conn.commit()
         cur.close()
@@ -127,4 +127,4 @@ def reset_password(email, raw_recovery_key, new_raw_password):
     else:
         cur.close()
         conn.close()
-        return False, "Invalid Email or Recovery Key."
+        return False, "Invalid Email, Company Name, or Recovery Key."
