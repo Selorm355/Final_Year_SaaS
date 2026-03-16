@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   web:
     build: .
@@ -9,8 +7,9 @@ services:
       - .:/app  # Live-reloads your code as you type
     depends_on:
       - db
+      - minio # Tells Streamlit to wait for the Data Lake to boot up
     env_file:
-      - .env  # Gives Streamlit/Python access to the DB credentials
+      - .env  # Gives Streamlit/Python access to the DB & MinIO credentials
 
   db:
     image: postgres:15
@@ -24,5 +23,19 @@ services:
     volumes:
       - omnipulse_db_data:/var/lib/postgresql/data
 
+  minio:
+    image: minio/minio
+    restart: always
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    ports:
+      - "9000:9000" # The API Port (What your Python script talks to)
+      - "9001:9001" # The Web Console Port (Where you log in to look at the files)
+    volumes:
+      - minio_data:/data
+
 volumes:
   omnipulse_db_data:
+  minio_data: # Creates a permanent hard drive for your CSV files

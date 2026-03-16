@@ -6,37 +6,58 @@ import boto3
 from datetime import datetime
 
 # --- 1. INDUSTRY TEMPLATES (The Data Contract) ---
-# These dictate exactly what columns we expect from each SME type
 TEMPLATES = {
     "Retail": ["Date", "Receipt_ID", "Item_Name", "Quantity", "Unit_Cost", "Unit_Price"],
     "Healthcare": ["Date", "Patient_ID", "Diagnosis", "Treatment_Type", "Consultation_Fee"],
     "Hospitality": ["Date", "Booking_ID", "Room_Type", "Nights_Stayed", "Total_Paid"]
 }
 
+# --- 1.5. DATA DICTIONARY (User Documentation) ---
+COLUMN_DESCRIPTIONS = {
+    "Retail": {
+        "Date": "When the transaction occurred. Needed for daily sales tracking and seasonal AI predictions.",
+        "Receipt_ID": "A unique ID for the transaction. Helps calculate Average Order Value per customer.",
+        "Item_Name": "The product sold. Used to identify your top-selling inventory.",
+        "Quantity": "How many units were sold in this single transaction.",
+        "Unit_Cost": "What YOU paid for the item. Crucial for calculating your actual Profit Margins.",
+        "Unit_Price": "What the CUSTOMER paid for the item. Drives your gross revenue metrics."
+    },
+    "Healthcare": {
+        "Date": "When the patient visited. Needed to track seasonal health/epidemiology trends.",
+        "Patient_ID": "Unique identifier for the patient. Helps calculate retention and return-visit rates.",
+        "Diagnosis": "The medical condition diagnosed. Used for condition-tracking charts.",
+        "Treatment_Type": "The service rendered (e.g., Lab Test, Consultation). Shows revenue by department.",
+        "Consultation_Fee": "The final amount charged to the patient for the visit."
+    },
+    "Hospitality": {
+        "Date": "The check-in date or transaction date. Drives seasonal demand and occupancy predictions.",
+        "Booking_ID": "Unique identifier for the stay. Prevents duplicate revenue counting.",
+        "Room_Type": "The category of room booked. Helps identify your most popular and profitable rooms.",
+        "Nights_Stayed": "Duration of the stay. Needed to calculate Average Length of Stay (ALOS).",
+        "Total_Paid": "The final bill amount. Used to calculate your Average Daily Rate (ADR)."
+    }
+}
+
 # --- 2. THE MINIO DATA LAKE CONNECTOR ---
 def save_to_minio(file_bytes, filename):
-    """Saves the raw, untouched file into the MinIO Data Lake."""
+    """Saves the cleaned file into the MinIO Data Lake."""
     try:
-        # We use strictly the .env variables. If they are missing, it throws a safe error.
         minio_user = os.environ["MINIO_ROOT_USER"]
         minio_password = os.environ["MINIO_ROOT_PASSWORD"]
 
-        # Connect to the local MinIO container
         s3 = boto3.client(
             's3',
-            endpoint_url='http://localhost:9000', 
+            endpoint_url='http://minio:9000',  
             aws_access_key_id=minio_user,
             aws_secret_access_key=minio_password
         )
         
-        # Ensure the bucket exists
         bucket_name = "omnipulse-raw-data"
         try:
             s3.head_bucket(Bucket=bucket_name)
         except:
             s3.create_bucket(Bucket=bucket_name)
 
-        # Upload the file
         s3.upload_fileobj(io.BytesIO(file_bytes), bucket_name, filename)
         return True
     
@@ -47,14 +68,31 @@ def save_to_minio(file_bytes, filename):
         st.error(f"Data Lake Error: {e}")
         return False
 
+# --- HELPER: STANDARDIZE & UPLOAD ---
+def process_and_upload(df, expected_columns, company_id, industry, filename):
+    """Takes a mapped dataframe, drops garbage columns, tags it, and uploads."""
+    # 1. Drop all unmapped/extra columns
+    final_df = df[expected_columns].copy()
+    
+    # 2. Multi-Tenant Tagging
+    final_df['company_id'] = company_id
+    
+    # 3. Save to MinIO
+    csv_bytes = final_df.to_csv(index=False).encode('utf-8')
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    secure_filename = f"{company_id}_{industry}_{timestamp}_{filename}"
+    
+    if save_to_minio(csv_bytes, secure_filename):
+        st.success(f"🌊 Success! Cleaned file securely backed up to Data Lake as `{secure_filename}`.")
+        st.info("🔄 Pipeline Step: Data is standardized and ready for the Medallion Bronze Layer.")
+        st.balloons() 
+
 # --- 3. THE MAIN UI & LOGIC ---
 def show_ingestion_page():
-    # THE GATEKEEPER: Kick out anyone who isn't logged in
     if not st.session_state.get("logged_in"):
         st.error("🚨 Access Denied. Please log in to access the Data Ingestion portal.")
         return
 
-    # Grab the user's secure details from the invisible baton pass
     company_id = st.session_state["company_id"]
     industry = st.session_state["industry"]
     company_name = st.session_state["company_name"]
@@ -62,16 +100,21 @@ def show_ingestion_page():
     st.title("📥 Data Ingestion Portal")
     st.write(f"Welcome, **{company_name}**. Upload your daily or monthly records here.")
     
-    # --- TEMPLATE DOWNLOADER ---
-    st.markdown("### 1. Download Your Template")
-    st.info(f"To ensure your {industry} dashboard generates correctly, your data must match this exact format.")
+    # --- INSTRUCTIONS & TEMPLATE DOWNLOADER ---
+    st.markdown("### 1. Data Guidelines")
+    st.info(f"For the fastest processing, download our {industry} template. Otherwise, you can upload your own file and we will help you map your columns to our system.")
     
-    # Generate an empty CSV with the correct headers for their industry
+    # THE MACRO-DOCUMENTATION EXPANDER
+    with st.expander(f"💡 Why do we need these specific {industry} columns?"):
+        st.write(f"To generate accurate AI predictions and financial dashboards for your {industry} business, we rely on standard data points:")
+        for col, desc in COLUMN_DESCRIPTIONS[industry].items():
+            st.markdown(f"- **{col}**: {desc}")
+
     template_df = pd.DataFrame(columns=TEMPLATES[industry])
     template_csv = template_df.to_csv(index=False).encode('utf-8')
     
     st.download_button(
-        label=f"⬇️ Download {industry} Data Template (.csv)",
+        label=f"⬇️ Download Perfect {industry} Template (.csv)",
         data=template_csv,
         file_name=f"{industry}_template.csv",
         mime="text/csv",
@@ -81,60 +124,70 @@ def show_ingestion_page():
 
     # --- THE DROPZONE ---
     st.markdown("### 2. Upload Your Data")
-    # Accept both CSV and Excel for great UX
     uploaded_file = st.file_uploader("Drag and drop your file here", type=["csv", "xlsx"])
 
     if uploaded_file is not None:
-        # THE SIZE BOUNCER: Enforce the 10MB (approx. 100,000 row) limit
         file_size_mb = uploaded_file.size / (1024 * 1024)
         if file_size_mb > 10.0:
-            st.error(f"❌ File too large ({file_size_mb:.1f}MB). Please limit uploads to 10MB (approx. 100,000 rows).")
+            st.error(f"❌ File too large ({file_size_mb:.1f}MB). Limit: 10MB.")
             return
 
-        with st.spinner("Validating data..."):
+        if "raw_data" not in st.session_state or st.session_state.get("uploaded_filename") != uploaded_file.name:
             try:
-                # Read the file based on its extension
                 if uploaded_file.name.endswith('.csv'):
-                    df = pd.read_csv(uploaded_file)
+                    st.session_state["raw_data"] = pd.read_csv(uploaded_file)
                 else:
-                    # THE EXCEL GRACEFUL FAILURE
-                    df = pd.read_excel(uploaded_file)
-
-                # THE COLUMN BOUNCER: Check if they used the template
-                expected_columns = TEMPLATES[industry]
-                uploaded_columns = list(df.columns)
-
-                # Check if all expected columns exist in the uploaded file
-                missing_columns = [col for col in expected_columns if col not in uploaded_columns]
-                
-                if missing_columns:
-                    st.error(f"❌ Validation Failed: Your file is missing the following required columns: **{', '.join(missing_columns)}**")
-                    st.warning("Please download the template above, paste your data into it, and try again.")
-                    return
-
-                # --- MULTI-TENANT TAGGING ---
-                # Append the company_id to every single row so data never mixes
-                df['company_id'] = company_id
-                
-                st.success("✅ File format verified!")
-
-                # --- SAVE TO DATA LAKE (MinIO) ---
-                # Rename the file to include their ID and a timestamp
-                timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-                secure_filename = f"{company_id}_{industry}_{timestamp}_{uploaded_file.name}"
-                
-                # If they uploaded an Excel file, convert it to pure CSV text for the Data Lake
-                csv_bytes = df.to_csv(index=False).encode('utf-8')
-                
-                lake_success = save_to_minio(csv_bytes, secure_filename)
-
-                if lake_success:
-                    st.success(f"🌊 Raw file securely backed up to Data Lake as `{secure_filename}`.")
-                    
-                    # FUTURE STEP: Push `df` to PostgreSQL!
-                    st.info("🔄 Pipeline Step: Data is ready to be loaded into PostgreSQL Bronze Layer! (Pending DB Connection Update).")
-
+                    st.session_state["raw_data"] = pd.read_excel(uploaded_file)
+                st.session_state["uploaded_filename"] = uploaded_file.name
             except Exception as e:
-                # If Pandas crashes on a heavily formatted Excel file
-                st.error("⚠️ We couldn't read this file. If it is an Excel file with complex formatting, please open it, click 'Save As -> CSV', and upload the new CSV file.")
-                st.caption(f"Technical Error: {e}")
+                st.error("⚠️ We couldn't read this file. Please ensure it is a valid CSV or Excel file.")
+                return
+
+        df = st.session_state["raw_data"]
+        expected_columns = TEMPLATES[industry]
+        uploaded_columns = list(df.columns)
+        missing_columns = [col for col in expected_columns if col not in uploaded_columns]
+
+        # --- THE BOUNCER: FAIL-FAST CHECK ---
+        if len(uploaded_columns) < len(expected_columns):
+            st.error(f"❌ Insufficient Data: Your file only contains {len(uploaded_columns)} columns, but the {industry} dashboard requires at least {len(expected_columns)} distinct columns.")
+            st.warning("Please click the '💡 Why do we need these specific columns?' expander above to see what is missing, then upload a corrected file.")
+            return  # This stops the code instantly so the Mapping UI never loads!
+
+        # --- THE FORK IN THE ROAD ---
+        if not missing_columns:
+            # TRACK 1: PERFECT MATCH
+            st.success("✅ Perfect Match! We recognized all your columns.")
+            if st.button("Process & Upload Data"):
+                process_and_upload(df, expected_columns, company_id, industry, uploaded_file.name)
+        
+        else:
+            # TRACK 2: THE MAPPING UI
+            st.warning(f"⚠️ We found {len(missing_columns)} unrecognized columns. Let's map them to your dashboard.")
+            
+            with st.form("mapping_form"):
+                st.markdown("### Map Your Columns")
+                st.caption("Select which of your columns match our system requirements.")
+                
+                mapping_dict = {}
+                for expected_col in expected_columns:
+                    default_index = uploaded_columns.index(expected_col) if expected_col in uploaded_columns else 0
+                    
+                    # THE MICRO-DOCUMENTATION TOOLTIP (help parameter added here)
+                    mapping_dict[expected_col] = st.selectbox(
+                        f"Which column is **{expected_col}**?",
+                        options=uploaded_columns,
+                        index=default_index,
+                        key=f"map_{expected_col}",
+                        help=COLUMN_DESCRIPTIONS[industry][expected_col] 
+                    )
+                
+                submitted = st.form_submit_button("Confirm Mapping & Upload")
+                
+                if submitted:
+                    rename_map = {mapping_dict[k]: k for k in mapping_dict}
+                    try:
+                        mapped_df = df.rename(columns=rename_map)
+                        process_and_upload(mapped_df, expected_columns, company_id, industry, uploaded_file.name)
+                    except Exception as e:
+                        st.error(f"Mapping error: Ensure you didn't map the same column twice! ({e})")
