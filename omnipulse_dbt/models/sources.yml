@@ -1,0 +1,9 @@
+version: 2
+
+sources:
+  - name: raw_data           # Our nickname for this source
+    schema: bronze           # The actual Postgres schema where Python dumped the data
+    tables:
+      - name: bronze_retail_data
+      - name: bronze_healthcare_data
+      - name: bronze_hospitality_data

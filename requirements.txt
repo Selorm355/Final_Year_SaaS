@@ -6,4 +6,8 @@ dbt-postgres
 requests
 bcrypt
 openpyxl
-boto3
+boto3 
+sqlalchemy
+python-dotenv 
+dbt-core 
+uuid

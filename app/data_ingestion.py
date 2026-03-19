@@ -4,6 +4,7 @@ import io
 import os
 import boto3
 from datetime import datetime
+from load_to_bronze import process_minio_to_bronze  # <-- NEW: Importing your automated script
 
 # --- 1. INDUSTRY TEMPLATES (The Data Contract) ---
 TEMPLATES = {
@@ -71,21 +72,30 @@ def save_to_minio(file_bytes, filename):
 # --- HELPER: STANDARDIZE & UPLOAD ---
 def process_and_upload(df, expected_columns, company_id, industry, filename):
     """Takes a mapped dataframe, drops garbage columns, tags it, and uploads."""
-    # 1. Drop all unmapped/extra columns
     final_df = df[expected_columns].copy()
-    
-    # 2. Multi-Tenant Tagging
     final_df['company_id'] = company_id
     
-    # 3. Save to MinIO
     csv_bytes = final_df.to_csv(index=False).encode('utf-8')
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     secure_filename = f"{company_id}_{industry}_{timestamp}_{filename}"
     
     if save_to_minio(csv_bytes, secure_filename):
         st.success(f"🌊 Success! Cleaned file securely backed up to Data Lake as `{secure_filename}`.")
-        st.info("🔄 Pipeline Step: Data is standardized and ready for the Medallion Bronze Layer.")
         st.balloons() 
+        
+        # --- NEW AUTOMATION TRIGGER ---
+        with st.spinner("🤖 Automating Pipeline: Cleaning data and calculating metrics..."):
+            try:
+                # This calls your load_to_bronze script, which then triggers dbt!
+                process_minio_to_bronze()
+                
+                # --- THE SECURE AUTO-REDIRECT ---
+                # Write the destination on the sticky note and refresh!
+                st.session_state["go_to_page"] = "3. Data Preview"
+                st.rerun()
+                
+            except Exception as e:
+                st.error(f"⚠️ Pipeline execution failed: {e}")
 
 # --- 3. THE MAIN UI & LOGIC ---
 def show_ingestion_page():
@@ -100,11 +110,9 @@ def show_ingestion_page():
     st.title("📥 Data Ingestion Portal")
     st.write(f"Welcome, **{company_name}**. Upload your daily or monthly records here.")
     
-    # --- INSTRUCTIONS & TEMPLATE DOWNLOADER ---
     st.markdown("### 1. Data Guidelines")
     st.info(f"For the fastest processing, download our {industry} template. Otherwise, you can upload your own file and we will help you map your columns to our system.")
     
-    # THE MACRO-DOCUMENTATION EXPANDER
     with st.expander(f"💡 Why do we need these specific {industry} columns?"):
         st.write(f"To generate accurate AI predictions and financial dashboards for your {industry} business, we rely on standard data points:")
         for col, desc in COLUMN_DESCRIPTIONS[industry].items():
@@ -122,7 +130,6 @@ def show_ingestion_page():
     
     st.divider()
 
-    # --- THE DROPZONE ---
     st.markdown("### 2. Upload Your Data")
     uploaded_file = st.file_uploader("Drag and drop your file here", type=["csv", "xlsx"])
 
@@ -148,21 +155,17 @@ def show_ingestion_page():
         uploaded_columns = list(df.columns)
         missing_columns = [col for col in expected_columns if col not in uploaded_columns]
 
-        # --- THE BOUNCER: FAIL-FAST CHECK ---
         if len(uploaded_columns) < len(expected_columns):
             st.error(f"❌ Insufficient Data: Your file only contains {len(uploaded_columns)} columns, but the {industry} dashboard requires at least {len(expected_columns)} distinct columns.")
             st.warning("Please click the '💡 Why do we need these specific columns?' expander above to see what is missing, then upload a corrected file.")
-            return  # This stops the code instantly so the Mapping UI never loads!
+            return
 
-        # --- THE FORK IN THE ROAD ---
         if not missing_columns:
-            # TRACK 1: PERFECT MATCH
             st.success("✅ Perfect Match! We recognized all your columns.")
             if st.button("Process & Upload Data"):
                 process_and_upload(df, expected_columns, company_id, industry, uploaded_file.name)
         
         else:
-            # TRACK 2: THE MAPPING UI
             st.warning(f"⚠️ We found {len(missing_columns)} unrecognized columns. Let's map them to your dashboard.")
             
             with st.form("mapping_form"):
@@ -173,7 +176,6 @@ def show_ingestion_page():
                 for expected_col in expected_columns:
                     default_index = uploaded_columns.index(expected_col) if expected_col in uploaded_columns else 0
                     
-                    # THE MICRO-DOCUMENTATION TOOLTIP (help parameter added here)
                     mapping_dict[expected_col] = st.selectbox(
                         f"Which column is **{expected_col}**?",
                         options=uploaded_columns,
