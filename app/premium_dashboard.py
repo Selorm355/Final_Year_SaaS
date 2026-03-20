@@ -4,6 +4,8 @@ import streamlit as st
 # We will import the industry-specific files here
 # (We will create dashboard_retail.py in the next step!)
 import dashboard_retail 
+import dashboard_healthcare
+import dashboard_hospitality
 
 def show_dashboard():
     st.title("📈 AI Forecasting & Analytics")
@@ -38,11 +40,11 @@ def show_dashboard():
         
     elif industry == "healthcare":
         st.info("🏥 Healthcare dashboard module is currently under construction.")
-        # dashboard_healthcare.render_dashboard(company_id)
+        dashboard_healthcare.render_dashboard(company_id)
         
     elif industry == "hospitality":
         st.info("🏨 Hospitality dashboard module is currently under construction.")
-        # dashboard_hospitality.render_dashboard(company_id)
+        dashboard_hospitality.render_dashboard(company_id)
         
     else:
         st.error("Industry not recognized.")

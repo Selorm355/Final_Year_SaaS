@@ -11,3 +11,4 @@ sqlalchemy
 python-dotenv 
 dbt-core 
 uuid
+plotly

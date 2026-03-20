@@ -7,7 +7,7 @@ import auth
 import user_connection 
 import data_ingestion 
 import show_clean_data # <-- NEW: Import your Data Preview page
-import premium_dashboard
+import premium_dashboard # <-- this is the premiumdashbord import has nothing to do with medallion architecture, it is links the main.py to the premium_dashboard.py file where the premium dashboard is built.
 
 # --- Database Initialization ---
 try:
