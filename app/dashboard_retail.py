@@ -1,7 +1,8 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import os
+import os 
+import ai_forecasting
 from sqlalchemy import create_engine
 from dotenv import load_dotenv
 
@@ -88,20 +89,58 @@ def render_dashboard(company_id):
     st.divider()
 
     # 5. MIDDLE ROW: THE MAIN TIME-SERIES CHART
-    # Plotly Area Chart for a modern, sleek SaaS look
-    fig_trend = px.area(
-        trend_df, 
-        x='transaction_date', 
-        y='total_sale_value',
-        title=f"Revenue Trend ({time_grouping}ly)",
-        labels={'transaction_date': 'Date', 'total_sale_value': 'Revenue (GH₵)'},
-        color_discrete_sequence=['#00b4d8'] # A nice modern blue
-    )
-    # Format the hover text to show Cedis
+    st.divider()
+    col_chart_title, col_ai_toggle = st.columns([3, 1])
+    
+    with col_chart_title:
+        st.subheader("⏱️ Revenue Trends & AI Prediction")
+    with col_ai_toggle:
+        # The cool SaaS toggle switch
+        enable_ai = st.toggle("🤖 Enable AI Forecast")
+
+    if enable_ai:
+        with st.spinner("AI is analyzing historical trends to predict the future..."):
+            # Set how far into the future to look based on their grouping
+            if time_grouping == "Day":
+                periods, freq_code = 7, 'D'    # Predict next 7 days
+            elif time_grouping == "Week":
+                periods, freq_code = 4, 'W'    # Predict next 4 weeks
+            else:
+                periods, freq_code = 3, 'M'    # Predict next 3 months
+
+            # Call our agnostic brain!
+            plot_df = ai_forecasting.generate_forecast(
+                trend_df, 
+                date_col='transaction_date', 
+                metric_col='total_sale_value',
+                forecast_periods=periods,
+                freq=freq_code
+            )
+            
+            # Plotly Line Chart showing historical vs predicted
+            fig_trend = px.line(
+                plot_df, 
+                x='transaction_date', 
+                y='predicted_value',
+                color='Type',
+                line_dash='Type', # Makes the forecast line dotted!
+                color_discrete_map={'Historical Data': '#00b4d8', 'Forecast (AI)': '#ff9f1c'},
+                labels={'transaction_date': 'Date', 'predicted_value': 'Revenue (GH₵)'}
+            )
+            
+    else:
+        # Standard Area Chart (No AI)
+        fig_trend = px.area(
+            trend_df, 
+            x='transaction_date', 
+            y='total_sale_value',
+            labels={'transaction_date': 'Date', 'total_sale_value': 'Revenue (GH₵)'},
+            color_discrete_sequence=['#00b4d8'] 
+        )
+
     fig_trend.update_traces(hovertemplate="<b>Date:</b> %{x}<br><b>Revenue:</b> GH₵ %{y:,.2f}<extra></extra>")
     fig_trend.update_layout(xaxis_title="", yaxis_title="")
     st.plotly_chart(fig_trend, use_container_width=True)
-
     st.divider()
 
     # 6. BOTTOM ROW: PRODUCT BREAKDOWN

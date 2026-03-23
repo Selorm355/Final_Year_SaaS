@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import os
+import ai_forecasting
 from sqlalchemy import create_engine
 from dotenv import load_dotenv
 
@@ -60,18 +61,48 @@ def render_dashboard(company_id):
 
     st.divider()
 
-    # MAIN CHART
-    fig_trend = px.area(
-        trend_df, x='visit_date', y='consultation_fee',
-        title=f"Revenue Trend ({time_grouping}ly)",
-        labels={'visit_date': 'Date', 'consultation_fee': 'Revenue (GH₵)'},
-        color_discrete_sequence=['#2a9d8f'] # Medical green
-    )
+    # MAIN CHART WITH AI INTEGRATION
+    st.divider()
+    col_chart_title, col_ai_toggle = st.columns([3, 1])
+    
+    with col_chart_title:
+        st.subheader("⏱️ Revenue Trends & AI Prediction")
+    with col_ai_toggle:
+        enable_ai = st.toggle("🤖 Enable AI Forecast", key="hc_ai")
+
+    if enable_ai:
+        with st.spinner("AI is analyzing clinic historical trends..."):
+            if time_grouping == "Day":
+                periods, freq_code = 7, 'D'
+            elif time_grouping == "Week":
+                periods, freq_code = 4, 'W'
+            else:
+                periods, freq_code = 3, 'M'
+
+            # Feed the brain the Healthcare columns!
+            plot_df = ai_forecasting.generate_forecast(
+                trend_df, 
+                date_col='visit_date', 
+                metric_col='consultation_fee',
+                forecast_periods=periods,
+                freq=freq_code
+            )
+            
+            fig_trend = px.line(
+                plot_df, x='visit_date', y='predicted_value', color='Type', line_dash='Type',
+                color_discrete_map={'Historical Data': '#2a9d8f', 'Forecast (AI)': '#ff9f1c'},
+                labels={'visit_date': 'Date', 'predicted_value': 'Revenue (GH₵)'}
+            )
+    else:
+        fig_trend = px.area(
+            trend_df, x='visit_date', y='consultation_fee',
+            labels={'visit_date': 'Date', 'consultation_fee': 'Revenue (GH₵)'},
+            color_discrete_sequence=['#2a9d8f'] 
+        )
+
     fig_trend.update_traces(hovertemplate="<b>Date:</b> %{x}<br><b>Revenue:</b> GH₵ %{y:,.2f}<extra></extra>")
     fig_trend.update_layout(xaxis_title="", yaxis_title="")
     st.plotly_chart(fig_trend, use_container_width=True)
-
-    st.divider()
 
     # BOTTOM ROW
     st.subheader("🩺 Clinical Insights")

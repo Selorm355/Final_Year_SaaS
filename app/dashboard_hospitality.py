@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 import os
+import ai_forecasting
 from sqlalchemy import create_engine
 from dotenv import load_dotenv
 
@@ -59,17 +60,48 @@ def render_dashboard(company_id):
 
     st.divider()
 
-    # MAIN CHART
-    fig_trend = px.area(
-        trend_df, x='check_in_date', y='total_paid',
-        title=f"Revenue Trend ({time_grouping}ly)",
-        labels={'check_in_date': 'Check-In Date', 'total_paid': 'Revenue (GH₵)'},
-        color_discrete_sequence=['#8338ec'] # Luxury purple
-    )
+    # MAIN CHART WITH AI INTEGRATION
+    st.divider()
+    col_chart_title, col_ai_toggle = st.columns([3, 1])
+    
+    with col_chart_title:
+        st.subheader("⏱️ Revenue Trends & AI Prediction")
+    with col_ai_toggle:
+        enable_ai = st.toggle("🤖 Enable AI Forecast", key="hosp_ai")
+
+    if enable_ai:
+        with st.spinner("AI is analyzing hotel booking trends..."):
+            if time_grouping == "Day":
+                periods, freq_code = 7, 'D'
+            elif time_grouping == "Week":
+                periods, freq_code = 4, 'W'
+            else:
+                periods, freq_code = 3, 'M'
+
+            # Feed the brain the Hospitality columns!
+            plot_df = ai_forecasting.generate_forecast(
+                trend_df, 
+                date_col='check_in_date', 
+                metric_col='total_paid',
+                forecast_periods=periods,
+                freq=freq_code
+            )
+            
+            fig_trend = px.line(
+                plot_df, x='check_in_date', y='predicted_value', color='Type', line_dash='Type',
+                color_discrete_map={'Historical Data': '#8338ec', 'Forecast (AI)': '#ff9f1c'},
+                labels={'check_in_date': 'Date', 'predicted_value': 'Revenue (GH₵)'}
+            )
+    else:
+        fig_trend = px.area(
+            trend_df, x='check_in_date', y='total_paid',
+            labels={'check_in_date': 'Date', 'total_paid': 'Revenue (GH₵)'},
+            color_discrete_sequence=['#8338ec'] 
+        )
+
     fig_trend.update_traces(hovertemplate="<b>Date:</b> %{x}<br><b>Revenue:</b> GH₵ %{y:,.2f}<extra></extra>")
     fig_trend.update_layout(xaxis_title="", yaxis_title="")
     st.plotly_chart(fig_trend, use_container_width=True)
-
     st.divider()
 
     # BOTTOM ROW
