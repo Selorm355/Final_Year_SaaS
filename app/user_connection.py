@@ -26,7 +26,12 @@ def get_connection():
 def init_db():
     conn = get_connection()
     cur = conn.cursor()
-    
+
+    # Auto-create medallion schemas so users never see a schema error
+    cur.execute("CREATE SCHEMA IF NOT EXISTS bronze;")
+    cur.execute("CREATE SCHEMA IF NOT EXISTS silver;")
+    cur.execute("CREATE SCHEMA IF NOT EXISTS gold;")
+
     # Removed the UNIQUE constraint from email alone. 
     # Added subscription tracking and a Composite Unique Constraint at the bottom.
     cur.execute("""
