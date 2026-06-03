@@ -21,7 +21,11 @@ if "logged_in" not in st.session_state:
 
 # Initialize the default starting page for the remote control
 if "sidebar_nav" not in st.session_state:
-    st.session_state["sidebar_nav"] = "1. Account Access" 
+    st.session_state["sidebar_nav"] = "1. Account Access"
+
+# Track the previous selected page so we can reset landing state only when navigating back to Account Access.
+if "prev_sidebar_nav" not in st.session_state:
+    st.session_state["prev_sidebar_nav"] = st.session_state["sidebar_nav"]
 
 # --- NEW: THE TELEPORTATION INTERCEPTOR ---
 # If a script asked us to change pages, do it BEFORE drawing the sidebar!
@@ -39,6 +43,10 @@ page = st.sidebar.radio(
 
 # --- Page Routing ---
 if page == "1. Account Access":
+    # Reset to the landing auth screen when the user navigates back to Account Access
+    # from another page, so the Log In / Register buttons are visible again.
+    if st.session_state.get("prev_sidebar_nav") != "1. Account Access":
+        st.session_state["auth_screen"] = "landing"
     auth.show_auth_page()
 
 elif page == "2. Data Ingestion":
@@ -50,3 +58,5 @@ elif page == "3. Data Preview":
 elif page == "4. Premium Dashboard":
     # Hand control over to the Traffic Cop!
     premium_dashboard.show_dashboard()
+
+st.session_state["prev_sidebar_nav"] = page
