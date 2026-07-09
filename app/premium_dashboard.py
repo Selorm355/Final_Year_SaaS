@@ -39,11 +39,11 @@ def show_dashboard():
         dashboard_retail.render_dashboard(company_id)
         
     elif industry == "healthcare":
-        st.info("🏥 Healthcare dashboard module is currently under construction.")
+         # st.info("🏥 Healthcare dashboard module is currently under construction.")
         dashboard_healthcare.render_dashboard(company_id)
         
     elif industry == "hospitality":
-        st.info("🏨 Hospitality dashboard module is currently under construction.")
+        # st.info("🏨 Hospitality dashboard module is currently under construction.")
         dashboard_hospitality.render_dashboard(company_id)
         
     else:

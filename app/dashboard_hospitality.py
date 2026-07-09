@@ -16,7 +16,7 @@ def fetch_hospitality_data():
             booking_id, 
             room_type, 
             nights_stayed, 
-            total_paid
+            total_paid_ghs
         FROM silver.silver_hospitality_clean
     """
     df = pd.read_sql(query, engine)
@@ -27,8 +27,8 @@ def render_dashboard(company_id):
     with st.spinner("Gathering hotel metrics..."):
         try:
             df = fetch_hospitality_data()
-        except Exception:
-            st.error("⚠️ Could not load data. Please ingest your hospitality data first.")
+        except Exception as e:
+            st.error(f"⚠️ CRASH DETAILS: {e}")
             return
 
     if df.empty:
@@ -40,16 +40,16 @@ def render_dashboard(company_id):
 
     df_time = df.set_index('check_in_date')
     if time_grouping == "Day":
-        trend_df = df_time.resample('D').agg({'total_paid': 'sum', 'nights_stayed': 'sum'}).reset_index()
+        trend_df = df_time.resample('D').agg({'total_paid_ghs': 'sum', 'nights_stayed': 'sum'}).reset_index()
     elif time_grouping == "Week":
-        trend_df = df_time.resample('W-MON').agg({'total_paid': 'sum', 'nights_stayed': 'sum'}).reset_index()
+        trend_df = df_time.resample('W-MON').agg({'total_paid_ghs': 'sum', 'nights_stayed': 'sum'}).reset_index()
     else:
-        trend_df = df_time.resample('ME').agg({'total_paid': 'sum', 'nights_stayed': 'sum'}).reset_index()
+        trend_df = df_time.resample('ME').agg({'total_paid_ghs': 'sum', 'nights_stayed': 'sum'}).reset_index()
         
-    trend_df = trend_df[trend_df['total_paid'] > 0]
+    trend_df = trend_df[trend_df['total_paid_ghs'] > 0]
 
     # KPI CARDS
-    total_revenue = df['total_paid'].sum()
+    total_revenue = df['total_paid_ghs'].sum()
     total_nights = df['nights_stayed'].sum()
     total_bookings = df['booking_id'].nunique()
 
@@ -78,11 +78,10 @@ def render_dashboard(company_id):
             else:
                 periods, freq_code = 3, 'M'
 
-            # Feed the brain the Hospitality columns!
             plot_df = ai_forecasting.generate_forecast(
                 trend_df, 
                 date_col='check_in_date', 
-                metric_col='total_paid',
+                metric_col='total_paid_ghs',
                 forecast_periods=periods,
                 freq=freq_code
             )
@@ -94,8 +93,8 @@ def render_dashboard(company_id):
             )
     else:
         fig_trend = px.area(
-            trend_df, x='check_in_date', y='total_paid',
-            labels={'check_in_date': 'Date', 'total_paid': 'Revenue (GH₵)'},
+            trend_df, x='check_in_date', y='total_paid_ghs',
+            labels={'check_in_date': 'Date', 'total_paid_ghs': 'Revenue (GH₵)'},
             color_discrete_sequence=['#8338ec'] 
         )
 
@@ -108,7 +107,7 @@ def render_dashboard(company_id):
     st.subheader("🛏️ Room Performance")
     
     room_popularity = df.groupby('room_type')['nights_stayed'].sum().reset_index().sort_values(by='nights_stayed', ascending=False)
-    room_revenue = df.groupby('room_type')['total_paid'].sum().reset_index()
+    room_revenue = df.groupby('room_type')['total_paid_ghs'].sum().reset_index()
 
     col_left, col_right = st.columns(2)
     with col_left:
@@ -122,7 +121,7 @@ def render_dashboard(company_id):
 
     with col_right:
         fig_donut = px.pie(
-            room_revenue, values='total_paid', names='room_type', hole=0.4,
+            room_revenue, values='total_paid_ghs', names='room_type', hole=0.4,
             title="Revenue Share by Room Type"
         )
         fig_donut.update_traces(textinfo='percent', hovertemplate="<b>%{label}</b><br>Revenue: GH₵ %{value:,.2f}<extra></extra>")

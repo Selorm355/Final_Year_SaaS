@@ -13,6 +13,7 @@ services:
       - .env
     environment:
       - DB_HOST=db
+      - STREAMLIT_SERVER_FILE_WATCHER_TYPE=poll
 
   db:
     image: postgres:15

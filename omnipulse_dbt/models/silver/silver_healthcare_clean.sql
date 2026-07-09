@@ -16,7 +16,10 @@ cleaned_healthcare AS (
         CAST("Patient_ID" AS VARCHAR)       AS patient_id,
         CAST("Diagnosis" AS VARCHAR)        AS diagnosis,
         CAST("Treatment_Type" AS VARCHAR)   AS treatment_type,
-        CAST("Consultation_Fee" AS DECIMAL(10, 2)) AS consultation_fee
+        
+        -- Renamed to reflect Ghana Cedis and enforce decimal places
+        CAST("Consultation_Fee" AS DECIMAL(10, 2)) AS consultation_fee_ghs
+        
     FROM raw_healthcare
     WHERE "Patient_ID" IS NOT NULL 
       AND "Consultation_Fee" >= 0
@@ -33,7 +36,7 @@ SELECT
     NULL::VARCHAR       AS patient_id,
     NULL::VARCHAR       AS diagnosis,
     NULL::VARCHAR       AS treatment_type,
-    NULL::DECIMAL(10,2) AS consultation_fee
+    NULL::DECIMAL(10,2) AS consultation_fee_ghs
 WHERE 1 = 0
 
 {% endif %}

@@ -24,8 +24,9 @@ def fetch_retail_data():
             receipt_id, 
             item_name, 
             quantity, 
-            unit_price,
-            (quantity * unit_price) AS total_sale_value
+            unit_price_ghs,
+            total_profit_ghs,
+            (quantity * unit_price_ghs) AS total_sale_value
         FROM silver.silver_retail_clean
     """
     df = pd.read_sql(query, engine)
@@ -41,7 +42,8 @@ def render_dashboard(company_id):
         try:
             df = fetch_retail_data()
         except Exception as e:
-            st.error("⚠️ Could not load dashboard data. Please ensure you have ingested data first.")
+            # This prints the EXACT database crash log to your dashboard
+            st.error(f"⚠️ CRASH DETAILS: {e}")
             return
 
     if df.empty:

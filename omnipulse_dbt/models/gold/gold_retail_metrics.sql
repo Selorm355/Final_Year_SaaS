@@ -14,16 +14,16 @@ SELECT
     SUM(quantity) AS total_items_sold,
     
     -- Financial Metrics
-    SUM(quantity * unit_cost) AS total_cogs, -- Cost of Goods Sold
-    SUM(quantity * unit_price) AS gross_revenue,
+    SUM(quantity * unit_cost_ghs) AS total_cogs, -- Cost of Goods Sold
+    SUM(quantity * unit_price_ghs) AS gross_revenue,
     
-    -- The Money Maker: Profit
-    SUM(quantity * unit_price) - SUM(quantity * unit_cost) AS gross_profit,
+    -- The Money Maker: Profit (Now pulling the pre-calculated Silver metric)
+    SUM(total_profit_ghs) AS gross_profit,
     
     -- Average Order Value (Revenue / Number of Transactions)
     CASE 
         WHEN COUNT(DISTINCT receipt_id) = 0 THEN 0 
-        ELSE SUM(quantity * unit_price) / COUNT(DISTINCT receipt_id) 
+        ELSE SUM(quantity * unit_price_ghs) / COUNT(DISTINCT receipt_id) 
     END AS average_order_value
 
 FROM clean_retail

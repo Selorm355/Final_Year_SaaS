@@ -13,12 +13,12 @@ SELECT
     SUM(nights_stayed) AS total_nights_stayed,
     
     -- Financial Metrics
-    SUM(total_paid) AS total_daily_revenue,
+    SUM(total_paid_ghs) AS total_daily_revenue,
     
     -- ADR (Average Daily Rate) = Total Revenue / Total Nights
     CASE 
         WHEN SUM(nights_stayed) = 0 THEN 0 
-        ELSE SUM(total_paid) / SUM(nights_stayed) 
+        ELSE SUM(total_paid_ghs) / SUM(nights_stayed) 
     END AS average_daily_rate,
 
     -- ALOS (Average Length of Stay) = Total Nights / Total Bookings

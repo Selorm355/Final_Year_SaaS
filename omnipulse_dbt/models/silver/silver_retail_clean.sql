@@ -6,7 +6,7 @@ WITH raw_retail AS (
 ),
 
 cleaned_retail AS (
-    -- 2. Clean and Cast Data Types
+    -- 2. Clean, Cast Data Types, and Calculate Profit
     SELECT
         company_id,
         
@@ -19,8 +19,14 @@ cleaned_retail AS (
         CAST("Receipt_ID" AS VARCHAR) AS receipt_id,
         CAST("Item_Name" AS VARCHAR) AS item_name,
         CAST("Quantity" AS INTEGER) AS quantity,
-        CAST("Unit_Cost" AS DECIMAL(10, 2)) AS unit_cost,
-        CAST("Unit_Price" AS DECIMAL(10, 2)) AS unit_price
+        
+        -- Rename to GHS and enforce decimal places
+        CAST("Unit_Cost" AS DECIMAL(10, 2)) AS unit_cost_ghs,
+        CAST("Unit_Price" AS DECIMAL(10, 2)) AS unit_price_ghs,
+        
+        -- Calculate Total Profit per line item ( (Price - Cost) * Quantity )
+        CAST((("Unit_Price" - "Unit_Cost") * "Quantity") AS DECIMAL(10, 2)) AS total_profit_ghs
+        
     FROM raw_retail
     -- 3. Filter out junk rows
     WHERE "Receipt_ID" IS NOT NULL 

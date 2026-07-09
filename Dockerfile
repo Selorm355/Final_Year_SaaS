@@ -8,8 +8,11 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 4. Open the port Streamlit uses
+# 4. Copy the rest of the application code into the image (Cloud safety net!)
+COPY . .
+
+# 5. Open the port Streamlit uses
 EXPOSE 8501
 
-# 5. The command to start your app
+# 6. The command to start your app
 CMD ["streamlit", "run", "app/main.py", "--server.port=8501", "--server.address=0.0.0.0"]

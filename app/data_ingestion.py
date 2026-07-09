@@ -81,7 +81,7 @@ def process_and_upload(df, expected_columns, company_id, industry, filename):
     
     if save_to_minio(csv_bytes, secure_filename):
         st.success(f"🌊 Success! Cleaned file securely backed up to Data Lake as `{secure_filename}`.")
-        st.balloons() 
+        st.toast("✅ File processed successfully! Check out your Premium Dashboard.", icon="🚀")
         
         # --- NEW AUTOMATION TRIGGER ---
         with st.spinner("🤖 Automating Pipeline: Cleaning data and calculating metrics..."):

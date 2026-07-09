@@ -16,7 +16,10 @@ cleaned_hospitality AS (
         CAST("Booking_ID" AS VARCHAR)           AS booking_id,
         CAST("Room_Type" AS VARCHAR)            AS room_type,
         CAST("Nights_Stayed" AS INTEGER)        AS nights_stayed,
-        CAST("Total_Paid" AS DECIMAL(10, 2))    AS total_paid
+        
+        -- Renamed to reflect Ghana Cedis and enforce decimal places
+        CAST("Total_Paid" AS DECIMAL(10, 2))    AS total_paid_ghs
+        
     FROM raw_hospitality
     WHERE "Booking_ID" IS NOT NULL 
       AND "Nights_Stayed" > 0
@@ -33,7 +36,7 @@ SELECT
     NULL::VARCHAR       AS booking_id,
     NULL::VARCHAR       AS room_type,
     NULL::INTEGER       AS nights_stayed,
-    NULL::DECIMAL(10,2) AS total_paid
+    NULL::DECIMAL(10,2) AS total_paid_ghs
 WHERE 1 = 0
 
 {% endif %}
