@@ -1,0 +1,230 @@
+/* --- SHARED & GLOBAL CSS --- */
+#MainMenu, footer, header {visibility: hidden;}
+.block-container {
+    padding-top: 0rem !important;
+    padding-bottom: 0rem !important;
+    padding-left: 0rem !important;
+    padding-right: 0rem !important;
+    max-width: 100% !important;
+}
+section[data-testid="stSidebar"] {display: none;}
+
+[data-testid="stAppViewContainer"] {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b2e 40%, #3b1f6e 100%) !important;
+}
+[data-testid="stAppViewBlockContainer"] {
+    background: transparent !important;
+}
+
+/* --- INPUT FIELDS --- */
+input[type="text"], input[type="password"], textarea,
+.stTextInput > div > div > input,
+.stTextArea > div > div > textarea,
+div[data-testid="stTextInput"] input {
+    background-color: rgba(255, 255, 255, 0.98) !important;
+    border: 1px solid rgba(168, 85, 247, 0.35) !important;
+    border-radius: 8px !important;
+    color: #111 !important;
+    padding: 0.85rem 1rem !important;
+    min-height: 48px !important;
+    height: 48px !important;
+    line-height: 1.2 !important;
+    font-size: 1rem !important;
+    transition: background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease;
+    box-sizing: border-box !important;
+}
+.stTextInput > div > div > input::placeholder,
+.stTextArea > div > div > textarea::placeholder {
+    color: rgba(0, 0, 0, 0.45) !important;
+}
+.stTextInput > div > div > input:focus,
+input[type="text"]:focus,
+input[type="password"]:focus,
+.stTextArea > div > div > textarea:focus {
+    border-color: #a855f7 !important;
+    box-shadow: 0 0 0 3px rgba(168,85,247,0.12) !important;
+    background-color: white !important;
+    color: #111 !important;
+}
+.stTextInput > div > div > input:hover,
+input[type="text"]:hover,
+input[type="password"]:hover,
+.stTextArea > div > div > textarea:hover {
+    background-color: rgba(255,255,255,0.98) !important;
+    border-color: #a855f7 !important;
+    color: #111 !important;
+}
+
+/* --- SELECT BOXES --- */
+.stSelectbox > div > div,
+div[data-baseweb="select"] {
+    background-color: transparent !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    border-radius: 8px !important;
+    color: white !important;
+    padding: 0.55rem 0.9rem !important;
+    min-height: 48px !important;
+    display: flex !important;
+    align-items: center !important;
+    transition: background-color 120ms ease, border-color 120ms ease;
+    box-sizing: border-box !important;
+}
+.stSelectbox > div > div:hover,
+.stSelectbox > div > div:focus-within,
+div[data-baseweb="select"]:hover {
+    border-color: #a855f7 !important;
+    background-color: rgba(168,85,247,0.04) !important;
+}
+
+/* --- BUTTONS --- */
+div[data-testid="stFormSubmitButton"],
+div[data-testid="stButton"] {
+    display: flex !important;
+    justify-content: center !important;
+}
+.stFormSubmitButton > button,
+.stButton > button,
+div[data-testid="stButton"] > button {
+    width: auto !important;
+    min-width: 220px !important;
+    max-width: 280px !important;
+    padding: 0.7rem 1.4rem !important;
+    background: linear-gradient(135deg, #6C63FF, #a855f7) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 8px !important;
+    font-weight: 700 !important;
+    font-size: 1rem !important;
+    transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+    box-shadow: 0 12px 30px rgba(108, 99, 255, 0.22) !important;
+    display: inline-block !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+}
+.stFormSubmitButton > button:hover,
+.stButton > button:hover,
+div[data-testid="stButton"] > button:hover {
+    transform: translateY(-1px) !important;
+    background: linear-gradient(135deg, #7c3aed, #c084fc) !important;
+}
+
+/* --- EXPANDERS & FORMS --- */
+.streamlit-expanderHeader, div[data-testid="stExpanderHeader"] {
+    background: linear-gradient(135deg, #6C63FF, #a855f7) !important;
+    color: white !important;
+    border: none !important;
+    border-radius: 8px !important;
+    padding: 0.75rem 1rem !important;
+    font-weight: 700 !important;
+}
+.streamlit-expanderContent {
+    background: rgba(15,23,42,0.92) !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    border-top: none !important;
+    border-radius: 0 0 16px 16px !important;
+    padding: 1rem !important;
+    color: white !important;
+}
+.stForm, div[data-testid="stForm"] {
+    background: linear-gradient(135deg, rgba(15,23,42,0.94), rgba(30,27,46,0.96), rgba(59,31,110,0.98)) !important;
+    border-radius: 24px !important;
+    padding: 2rem !important;
+    border: 1px solid rgba(168,85,247,0.35) !important;
+    box-shadow: 0 25px 75px rgba(0,0,0,0.25) !important;
+    color: white !important;
+}
+.stForm > div, div[data-testid="stForm"] > div { background: transparent !important; }
+.stForm label, div[data-testid="stForm"] label { color: white !important; }
+
+/* --- LANDING PAGE SPECIFIC --- */
+.landing-wrapper {
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b2e 40%, #3b1f6e 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 3rem 2rem;
+}
+.landing-badge {
+    background: rgba(108,99,255,0.2);
+    border: 1px solid rgba(168,85,247,0.4);
+    border-radius: 50px;
+    padding: 0.4rem 1.4rem;
+    color: #a78bfa;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 2rem;
+    display: inline-block;
+}
+.landing-title {
+    font-size: 3.5rem;
+    font-weight: 800;
+    color: white;
+    line-height: 1.15;
+    margin-bottom: 1.2rem;
+}
+.landing-title span {
+    background: linear-gradient(135deg, #6C63FF, #a855f7, #ec4899);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    /* For browsers that support the unprefixed property */
+    -webkit-text-fill-color: transparent;
+}
+.landing-subtitle {
+    color: rgba(255,255,255,0.6);
+    font-size: 1.1rem;
+    max-width: 520px;
+    margin: 0 auto 2rem auto;
+    line-height: 1.7;
+}
+.features-row {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 2.5rem;
+}
+.feature-pill {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 50px;
+    padding: 0.5rem 1.2rem;
+    color: rgba(255,255,255,0.75);
+    font-size: 0.85rem;
+}
+.btn-row {
+    display: flex;
+    gap: 1.5rem;
+    justify-content: center;
+    margin-bottom: 2.5rem;
+    margin-top: .5rem;
+}
+.btn-landing {
+    display: inline-block;
+    padding: 0.85rem 3rem;
+    border: 2px solid white;
+    border-radius: 10px;
+    color: white !important;
+    font-size: 1.1rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-decoration: none !important;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    background: transparent;
+}
+.btn-landing:hover {
+    background: rgba(255,255,255,0.1);
+    border-color: #a855f7;
+    color: #a855f7 !important;
+    text-decoration: none !important;
+}
+.landing-footer {
+    color: rgba(255,255,255,0.25);
+    font-size: 0.75rem;
+    text-align: center;
+}
