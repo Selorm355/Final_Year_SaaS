@@ -1,7 +1,7 @@
 import streamlit as st
 import json
 import os
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet 
 
 # --- 1. PAGE CONFIG MUST BE THE FIRST STREAMLIT COMMAND ---
 st.set_page_config(page_title="OmniPulse Analytics", page_icon="📊", layout="wide")
@@ -46,6 +46,9 @@ if not st.session_state["logged_in"] and "token" in st.query_params:
         st.session_state["industry"] = session_data["industry"]
         st.session_state["company_name"] = session_data["company_name"]
         
+        # Hydrate the full user dictionary so the Paywall Gatekeeper can read it!
+        st.session_state["user"] = session_data
+        
         # Route them safely to the dashboard upon refresh
         st.session_state["go_to_page"] = "2. Data Ingestion"
     except Exception:
@@ -85,7 +88,8 @@ elif page == "2. Data Ingestion":
 elif page == "3. Data Preview":
     show_clean_data.show_data_preview_page()
 
+# 🚨 UPDATED: Now points to the Trial & Paywall Gatekeeper!
 elif page == "4. Premium Dashboard":
-    premium_dashboard.show_dashboard()
+    premium_dashboard.render_dashboard_gatekeeper()
 
 st.session_state["prev_sidebar_nav"] = page
