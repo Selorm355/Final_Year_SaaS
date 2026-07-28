@@ -54,6 +54,25 @@ def show_data_preview_page():
             if silver_df.empty:
                 st.info("No cleaned data found yet.")
             else:
-                st.dataframe(silver_df.drop(columns=['company_id']), use_container_width=True)
+                display_df = silver_df.copy()
+                if 'quantity' in display_df.columns and 'unit_price' in display_df.columns:
+                    quantities = pd.to_numeric(display_df['quantity'], errors='coerce')
+                    unit_prices = pd.to_numeric(display_df['unit_price'], errors='coerce')
+                    display_df['total'] = quantities * unit_prices
+                    display_df['unit_price'] = unit_prices.apply(
+                        lambda x: f"GH₵ {x:,.2f}" if pd.notna(x) else ""
+                    )
+                    display_df['quantity'] = quantities.apply(
+                        lambda x: f"{int(x):,}" if pd.notna(x) else ""
+                    )
+                    display_df['total'] = display_df['total'].apply(
+                        lambda x: f"GH₵ {x:,.2f}" if pd.notna(x) else ""
+                    )
+                    cols = list(display_df.columns)
+                    # Move the new total column right after unit_price if it exists
+                    if 'total' in cols and 'unit_price' in cols:
+                        cols.insert(cols.index('unit_price') + 1, cols.pop(cols.index('total')))
+                        display_df = display_df[cols]
+                st.dataframe(display_df.drop(columns=['company_id']), use_container_width=True)
         except Exception as e:
             st.error(f"Waiting for clean records to build...")

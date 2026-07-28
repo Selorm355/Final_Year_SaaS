@@ -3,11 +3,11 @@ import streamlit as st
 # --- 1. PAGE CONFIG MUST BE THE FIRST STREAMLIT COMMAND ---
 st.set_page_config(page_title="OmniPulse Analytics", page_icon="📊", layout="wide")
 
-import auth  
-import user_connection 
-import data_ingestion 
-import show_clean_data # <-- NEW: Import your Data Preview page
-import premium_dashboard # <-- this is the premiumdashbord import has nothing to do with medallion architecture, it is links the main.py to the premium_dashboard.py file where the premium dashboard is built.
+import auth
+import user_connection
+import data_ingestion
+import show_clean_data
+import premium_dashboard
 
 # --- Database Initialization ---
 try:
@@ -15,23 +15,32 @@ try:
 except Exception as e:
     st.error(f"Failed to connect to the database: {e}")
 
-# Initialize session state for login tracking
+# --- AUTO-RESTORE SESSION FROM URL TOKEN (runs before sidebar exists) ---
 if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
 
-# Initialize the default starting page for the remote control
-if "sidebar_nav" not in st.session_state:
-    st.session_state["sidebar_nav"] = "1. Account Access"
+    session_token = st.query_params.get("session", None)
+    if session_token:
+        restored_user = user_connection.get_user_by_session(session_token)
+        if restored_user:
+            st.session_state["logged_in"] = True
+            st.session_state["company_id"] = restored_user["company_id"]
+            st.session_state["industry"] = restored_user["industry"]
+            st.session_state["company_name"] = restored_user["company_name"]
 
-# Track the previous selected page so we can reset landing state only when navigating back to Account Access.
+# Initialize the default starting page for the remote control
+# Logged-in users restored from a refresh should land on Data Ingestion, not the login screen
+if "sidebar_nav" not in st.session_state:
+    st.session_state["sidebar_nav"] = "2. Data Ingestion" if st.session_state["logged_in"] else "1. Account Access"
+
+# Track the previous selected page
 if "prev_sidebar_nav" not in st.session_state:
     st.session_state["prev_sidebar_nav"] = st.session_state["sidebar_nav"]
 
-# --- NEW: THE TELEPORTATION INTERCEPTOR ---
-# If a script asked us to change pages, do it BEFORE drawing the sidebar!
+# --- TELEPORTATION INTERCEPTOR ---
 if "go_to_page" in st.session_state:
     st.session_state["sidebar_nav"] = st.session_state["go_to_page"]
-    del st.session_state["go_to_page"] # Throw away the sticky note
+    del st.session_state["go_to_page"]
 
 # Sidebar Navigation (Now controlled by session_state!)
 st.sidebar.title("OmniPulse SaaS")
