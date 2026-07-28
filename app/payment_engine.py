@@ -1,7 +1,6 @@
 import os
 import requests
 import json
-import base64
 import uuid
 from datetime import datetime
 import user_connection as uc
@@ -13,10 +12,8 @@ import user_connection as uc
 # 🚨 THE MASTER SWITCH: Set to False when deploying for commercial production!
 IS_DEMO_MODE = True
 
-# Load Hubtel credentials from environment variables (with empty fallbacks for safety)
-HUBTEL_CLIENT_ID = os.getenv("HUBTEL_CLIENT_ID", "")
-HUBTEL_CLIENT_SECRET = os.getenv("HUBTEL_CLIENT_SECRET", "")
-HUBTEL_MERCHANT_ACCOUNT = os.getenv("HUBTEL_MERCHANT_ACCOUNT_NUMBER", "")
+# Load Paystack Secret Key from environment variables
+PAYSTACK_SECRET_KEY = os.getenv("PAYSTACK_SECRET_KEY", "") 
 
 # Centralized Pricing Engine
 PRICING_PLANS = {
@@ -34,9 +31,9 @@ PRICING_PLANS = {
     }
 }
 
-# Helper: Check if live Hubtel keys are configured
-def is_live_hubtel_configured():
-    return bool(HUBTEL_CLIENT_ID and HUBTEL_CLIENT_SECRET and HUBTEL_MERCHANT_ACCOUNT)
+# Helper: Check if live/test Paystack Secret Key is configured
+def is_live_paystack_configured():
+    return bool(PAYSTACK_SECRET_KEY and PAYSTACK_SECRET_KEY.startswith("sk_"))
 
 
 # =========================================================
@@ -47,52 +44,61 @@ def create_checkout_link(company_id, company_name, email, plan_key="MONTHLY", re
     """
     1. Generates a unique client transaction reference.
     2. Writes a PENDING transaction receipt to PostgreSQL.
-    3. Calls Hubtel to generate a Mobile Money checkout URL.
+    3. Calls Paystack API to generate a hosted checkout URL.
     """
     plan = PRICING_PLANS.get(plan_key.upper(), PRICING_PLANS["MONTHLY"])
-    amount = plan["price_ghs"]
+    amount_ghs = plan["price_ghs"]
     
     # Generate unique reference (e.g., OMNI-1-8F3A2B)
     unique_suffix = uuid.uuid4().hex[:6].upper()
     client_reference = f"OMNI-{company_id}-{unique_suffix}"
     
-    # Step 1: Record the pending receipt in our local database
+    # Step 1: Record the pending receipt in local PostgreSQL database
     db_success = uc.record_pending_transaction(
         company_id=company_id,
         client_reference=client_reference,
-        amount=amount,
+        amount=amount_ghs,
         plan_type=plan_key
     )
     
     if not db_success:
         return False, "Database error: Could not record pending transaction.", None
 
-    # Step 2: Check if we are running in Mock Mode (No keys configured)
-    if not is_live_hubtel_configured():
-        mock_url = f"{return_url}?mock_payment=true&ref={client_reference}&amount={amount}"
-        print(f"⚠️ [MOCK MODE] Hubtel keys missing. Generating simulated checkout link for {client_reference}")
+    # Step 2: Check if running in Mock Mode (No Paystack key configured)
+    if not is_live_paystack_configured():
+        mock_url = f"{return_url}?mock_payment=true&ref={client_reference}&amount={amount_ghs}"
+        print(f"⚠️ [MOCK MODE] Paystack key missing. Generating simulated checkout link for {client_reference}")
         return True, mock_url, client_reference
 
-    # Step 3: Call Live Hubtel API (PayProxy Initiate Endpoint)
-    endpoint = "https://payproxyapi.hubtel.com/items/initiate"
-    
-    # Base64 encode ClientID:ClientSecret for Basic Auth
-    auth_string = f"{HUBTEL_CLIENT_ID}:{HUBTEL_CLIENT_SECRET}"
-    encoded_auth = base64.b64encode(auth_string.encode('utf-8')).decode('utf-8')
+    # Step 3: Call Paystack Initialize Endpoint
+    endpoint = "https://api.paystack.co/transaction/initialize"
     
     headers = {
-        "Authorization": f"Basic {encoded_auth}",
+        "Authorization": f"Bearer {PAYSTACK_SECRET_KEY}",
         "Content-Type": "application/json"
     }
     
+    # Paystack requires amounts in currency subunits (Pesewas for GHS). 1 GHS = 100 Pesewas
+    amount_in_pesewas = int(amount_ghs * 100)
+    
     payload = {
-        "totalAmount": amount,
-        "description": plan["description"],
-        "callbackUrl": f"{return_url}/api/webhook/hubtel", # Background webhook (Optional for local testing)
-        "returnUrl": return_url,                           # Where user lands after MoMo prompt
-        "merchantAccountNumber": HUBTEL_MERCHANT_ACCOUNT,
-        "cancellationUrl": return_url,
-        "clientReference": client_reference
+        "email": email or "admin@omnipulse.com",
+        "amount": amount_in_pesewas,
+        "currency": "GHS",
+        "reference": client_reference,
+        "callback_url": return_url,
+        "metadata": {
+            "company_id": company_id,
+            "company_name": company_name,
+            "plan_key": plan_key,
+            "custom_fields": [
+                {
+                    "display_name": "Workspace ID",
+                    "variable_name": "company_id",
+                    "value": str(company_id)
+                }
+            ]
+        }
     }
     
     try:
@@ -100,16 +106,17 @@ def create_checkout_link(company_id, company_name, email, plan_key="MONTHLY", re
         
         if response.status_code == 200:
             data = response.json()
-            checkout_url = data.get("data", {}).get("checkoutUrl")
-            if checkout_url:
-                return True, checkout_url, client_reference
+            if data.get("status"):
+                checkout_url = data.get("data", {}).get("authorization_url")
+                if checkout_url:
+                    return True, checkout_url, client_reference
                 
-        # If Hubtel rejects the request, return the error
-        error_msg = f"Hubtel API Error ({response.status_code}): {response.text}"
+        # Handle API rejection
+        error_msg = f"Paystack API Error ({response.status_code}): {response.text}"
         return False, error_msg, client_reference
         
     except requests.exceptions.RequestException as e:
-        return False, f"Network error connecting to Hubtel: {str(e)}", client_reference
+        return False, f"Network error connecting to Paystack: {str(e)}", client_reference
 
 
 # =========================================================
@@ -119,9 +126,9 @@ def create_checkout_link(company_id, company_name, email, plan_key="MONTHLY", re
 def verify_payment_status(company_id, client_reference):
     """
     Powered by the '🔄 Verify Payment Status' button in Streamlit.
-    Checks if the transaction succeeded. If so, activates the subscription in PostgreSQL.
+    Queries Paystack to confirm charge success. If verified, activates subscription in PostgreSQL.
     """
-    # 1. Look up the pending transaction in PostgreSQL
+    # Step 1: Look up the pending transaction in local PostgreSQL
     tx = uc.get_pending_transaction(client_reference)
     if not tx:
         return False, "Transaction reference not found in database."
@@ -132,28 +139,24 @@ def verify_payment_status(company_id, client_reference):
     plan_key = tx['plan_type']
     plan = PRICING_PLANS.get(plan_key.upper(), PRICING_PLANS["MONTHLY"])
     
-    # Step 2: Check if we are in Mock Mode (Simulate instant MoMo success!)
-    if not is_live_hubtel_configured():
+    # Step 2: Check if running in Mock Mode (Simulate instant success)
+    if not is_live_paystack_configured():
         print(f"⚠️ [MOCK MODE] Simulating successful payment verification for {client_reference}")
         success, msg = uc.activate_subscription_and_log_transaction(
             company_id=company_id,
             client_reference=client_reference,
-            hubtel_tx_id=f"MOCK-HUBTEL-{uuid.uuid4().hex[:8].upper()}",
+            hubtel_tx_id=f"MOCK-PAYSTACK-{uuid.uuid4().hex[:8].upper()}",
             payment_method="MOCK_MTN_MOMO",
             plan_type=plan_key,
             duration_days=plan["duration_days"]
         )
         return success, f"[Demo Mode] {msg}"
 
-    # Step 3: Call Live Hubtel Transaction Status API
-    # Hubtel standard status check endpoint
-    endpoint = f"https://api-stat.hubtel.com/v1/merchantaccount/merchants/{HUBTEL_MERCHANT_ACCOUNT}/transactions/status?clientReference={client_reference}"
-    
-    auth_string = f"{HUBTEL_CLIENT_ID}:{HUBTEL_CLIENT_SECRET}"
-    encoded_auth = base64.b64encode(auth_string.encode('utf-8')).decode('utf-8')
+    # Step 3: Call Paystack Verify Endpoint
+    endpoint = f"https://api.paystack.co/transaction/verify/{client_reference}"
     
     headers = {
-        "Authorization": f"Basic {encoded_auth}",
+        "Authorization": f"Bearer {PAYSTACK_SECRET_KEY}",
         "Content-Type": "application/json"
     }
     
@@ -162,28 +165,28 @@ def verify_payment_status(company_id, client_reference):
         
         if response.status_code == 200:
             data = response.json()
-            # Hubtel returns '0000' or '00' or status 'Success' for completed MoMo charges
-            response_code = data.get("responseCode")
-            status_text = data.get("data", {}).get("status", "").upper()
             
-            if response_code in ["0000", "00"] or status_text in ["SUCCESS", "PAID"]:
-                hubtel_tx_id = data.get("data", {}).get("transactionId", "UNKNOWN-HUBTEL-ID")
-                payment_method = data.get("data", {}).get("paymentMethod", "MTN_MOMO")
+            if data.get("status") and data.get("data", {}).get("status") == "success":
+                tx_data = data.get("data", {})
+                paystack_tx_id = str(tx_data.get("id", "UNKNOWN-PAYSTACK-ID"))
+                channel = tx_data.get("channel", "mobile_money").upper()
                 
                 # Unlock database tier!
                 success, msg = uc.activate_subscription_and_log_transaction(
                     company_id=company_id,
                     client_reference=client_reference,
-                    hubtel_tx_id=hubtel_tx_id,
-                    payment_method=payment_method,
+                    hubtel_tx_id=paystack_tx_id,  # Column maps to gateway reference
+                    payment_method=f"PAYSTACK_{channel}",
                     plan_type=plan_key,
                     duration_days=plan["duration_days"]
                 )
                 return success, msg
             else:
-                return False, f"Payment pending or not approved on phone yet. (Status: {status_text or 'Pending'})"
+                paystack_status = data.get("data", {}).get("status", "pending")
+                gateway_response = data.get("data", {}).get("gateway_response", "Payment not completed yet.")
+                return False, f"Status: {paystack_status.capitalize()} ({gateway_response})"
                 
-        return False, f"Could not verify with Hubtel server. Status code: {response.status_code}"
+        return False, f"Could not verify with Paystack server. (HTTP {response.status_code})"
         
     except requests.exceptions.RequestException as e:
         return False, f"Network timeout while checking payment status: {str(e)}"

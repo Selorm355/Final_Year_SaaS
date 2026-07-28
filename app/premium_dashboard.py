@@ -1,5 +1,5 @@
 import streamlit as st
-import user_connection as uc
+import user_connection as uc 
 import payment_engine as pe
 
 # =========================================================
@@ -8,96 +8,114 @@ import payment_engine as pe
 
 def render_paywall_card(company_id, company_name, email):
     """Renders an enterprise upgrade card when trial views are exhausted."""
-    st.markdown("---") 
+    st.markdown("---")
     
-    # Modern styled box using Streamlit container
     with st.container(border=True):
         st.markdown(f"### 🔒 Workspace Locked: Free Trial Ended")
+        
+        # POLISHED: Business-friendly customer benefits (No technical jargon!)
         st.write(
             f"**{company_name}**, your free workspace trial credits have been exhausted. "
-            "Upgrade to an active subscription to unlock unlimited AI forecasting, automated ETL pipelines, "
-            "and multi-tenant branch analytics across your industry."
+            "Upgrade to an active subscription to unlock unlimited AI revenue forecasting, automated "
+            "daily data synchronization, and multi-location performance tracking across your entire business."
         )
         
         st.markdown("#### Choose Your Growth Plan:")
         col1, col2 = st.columns(2)
         
-        # --- PLAN 1: MONTHLY ---
+        # =========================================================
+        # --- COLUMN 1: PRO WORKSPACE (MONTHLY) ---
+        # =========================================================
         with col1:
             with st.container(border=True):
                 st.markdown("### Pro Workspace")
-                st.markdown(f"## **GHS {pe.PRICING_PLANS['MONTHLY']['price_ghs']:.2f}** `/ month`")
-                st.write("✅ Unlimited Data Ingestion")
-                st.write("✅ Automated Cleaning Pipelines")
-                st.write("✅ Standard AI Forecasting")
-                st.write("✅ Single-Branch Analytics")
+                monthly_price = pe.PRICING_PLANS["MONTHLY"]["price_ghs"]
+                st.markdown(f"## **GHS {monthly_price:.2f}** / month")
+                st.markdown("✅ Unlimited Data Ingestion")
+                st.markdown("✅ Automated Cleaning Pipelines")
+                st.markdown("✅ Standard AI Forecasting")
+                st.markdown("✅ Single-Branch Analytics")
                 
                 if st.button("🚀 Upgrade Monthly", key="btn_monthly", use_container_width=True):
-                    with st.spinner("Generating secure Hubtel MoMo checkout link..."):
-                        success, url_or_msg, ref = pe.create_checkout_link(
-                            company_id, company_name, email, plan_key="MONTHLY"
+                    with st.spinner("Generating Paystack checkout link..."):
+                        success, checkout_url, ref = pe.create_checkout_link(
+                            company_id=company_id,
+                            company_name=company_name,
+                            email=email,
+                            plan_key="MONTHLY"
                         )
                         if success:
                             st.session_state["pending_tx_ref"] = ref
-                            st.session_state["checkout_url"] = url_or_msg
+                            st.session_state["checkout_url"] = checkout_url
                             st.rerun()
                         else:
-                            st.error(f"Gateway Error: {url_or_msg}")
+                            st.error(f"Failed to initiate payment: {checkout_url}")
 
-        # --- PLAN 2: YEARLY ---
+        # =========================================================
+        # --- COLUMN 2: ENTERPRISE WORKSPACE (YEARLY) ---
+        # =========================================================
         with col2:
             with st.container(border=True):
                 st.markdown("### Enterprise Workspace")
-                st.markdown(f"## **GHS {pe.PRICING_PLANS['YEARLY']['price_ghs']:.2f}** `/ year`")
-                st.write("✅ **Everything in Pro Workspace**")
-                st.write("✅ **2 Months Free Discount**")
-                st.write("✅ Multi-Branch Tenant Comparison")
-                st.write("✅ Priority Webhook Processing")
+                yearly_price = pe.PRICING_PLANS["YEARLY"]["price_ghs"]
+                st.markdown(f"## **GHS {yearly_price:.2f}** / year")
+                st.markdown("✅ Everything in Pro Workspace")
+                st.markdown("✅ 2 Months Free Discount")
+                st.markdown("✅ Multi-Branch Tenant Comparison")
+                st.markdown("✅ Priority Webhook Processing")
                 
                 if st.button("👑 Upgrade Yearly (Best Value)", key="btn_yearly", type="primary", use_container_width=True):
-                    with st.spinner("Generating secure Hubtel MoMo checkout link..."):
-                        success, url_or_msg, ref = pe.create_checkout_link(
-                            company_id, company_name, email, plan_key="YEARLY"
+                    with st.spinner("Generating Paystack checkout link..."):
+                        success, checkout_url, ref = pe.create_checkout_link(
+                            company_id=company_id,
+                            company_name=company_name,
+                            email=email,
+                            plan_key="YEARLY"
                         )
                         if success:
                             st.session_state["pending_tx_ref"] = ref
-                            st.session_state["checkout_url"] = url_or_msg
+                            st.session_state["checkout_url"] = checkout_url
                             st.rerun()
                         else:
-                            st.error(f"Gateway Error: {url_or_msg}")
+                            st.error(f"Failed to initiate payment: {checkout_url}")
 
         # =========================================================
-        # --- ACTIVE PAYMENT POLLING AREA (When link is generated) ---
+        # --- ACTIVE PAYMENT POLLING AREA ---
         # =========================================================
         if "pending_tx_ref" in st.session_state and "checkout_url" in st.session_state:
             st.markdown("---")
-            st.info(f"📱 **Action Required:** A payment request reference (`{st.session_state['pending_tx_ref']}`) has been initiated.")
             
-            # Button 1: Send them to Hubtel to type MoMo number
+            # POLISHED: Friendlier payment initiation notice
+            st.info(
+                f"📱 **Payment Initiated:** Your secure transaction reference is "
+                f"**`{st.session_state['pending_tx_ref']}`**. Please complete the prompt on your mobile device."
+            )
+            
             st.link_button(
-                "👉 Step 1: Click Here to Authorize Payment on Hubtel", 
+                "👉 Step 1: Click Here to Authorize Payment on Paystack", 
                 st.session_state["checkout_url"], 
                 type="primary", 
                 use_container_width=True
             )
             
-            st.write("*After approving the USSD prompt on your mobile phone, click the button below to unlock your workspace:*")
+            st.write("*After approving the prompt on your mobile screen, click the button below to unlock your workspace:*")
             
-            # Button 2: Active polling button to check status
             if st.button("🔄 Step 2: Verify Payment Status", key="btn_verify", use_container_width=True):
-                with st.spinner("Checking transaction status with cellular network..."):
+                with st.spinner("Checking transaction status with Paystack..."):
                     verified, msg = pe.verify_payment_status(
                         company_id, 
                         st.session_state["pending_tx_ref"]
                     )
                     if verified:
                         st.success(f"🎉 {msg}")
-                        # Clean up session state and reload page to drop paywall!
-                        del st.session_state["pending_tx_ref"]
-                        del st.session_state["checkout_url"]
+                        if "pending_tx_ref" in st.session_state:
+                            del st.session_state["pending_tx_ref"]
+                        if "checkout_url" in st.session_state:
+                            del st.session_state["checkout_url"]
                         st.rerun()
                     else:
                         st.warning(f"⏳ {msg}")
+
 
 # =========================================================
 # --- 2. THE MASTER GATEKEEPER (Call this from main.py) ---
@@ -108,6 +126,26 @@ def render_dashboard_gatekeeper():
     Main entry point for the Premium Dashboard page.
     Checks database subscription tier and trial credits before rendering graphs.
     """
+    # 0. CATCH PAYSTACK REDIRECT: Check if Paystack sent the user back with a reference in the URL!
+    query_params = st.query_params
+    if "reference" in query_params:
+        ref_from_url = query_params["reference"]
+        
+        # We need a company_id to verify. Let's extract safely from session or query
+        has_user_dict = "user" in st.session_state and bool(st.session_state["user"])
+        company_id = st.session_state["user"]["company_id"] if has_user_dict else st.session_state.get("company_id")
+        
+        if company_id:
+            with st.spinner("Processing payment return from Paystack..."):
+                verified, msg = pe.verify_payment_status(company_id, ref_from_url)
+                if verified:
+                    st.success(f"🎉 {msg}")
+                    # Clear query params so it doesn't loop verification on refresh
+                    st.query_params.clear()
+                    st.rerun()
+                else:
+                    st.warning(f"⏳ Payment verification status: {msg}")
+
     # 1. Ensure user is authenticated (checks both standard login and token login)
     is_logged_in = st.session_state.get("logged_in", False)
     has_user_dict = "user" in st.session_state and bool(st.session_state["user"])
@@ -143,23 +181,21 @@ def render_dashboard_gatekeeper():
     # --- STATE A: ACTIVE PAID SUBSCRIBER ---
     if is_paid:
         st.success(f"👑 **Active Subscription ({sub_info['tier']} Tier):** Unlimited workspace access enabled.")
-        route_to_industry_dashboard(company_id)  # 🚨 Passes company_id into your real chart function!
+        route_to_industry_dashboard(company_id)  
         return
 
     # --- STATE B: FREE TRIAL WITH VIEWS REMAINING (> 0) ---
     if views_left > 0:
-        # Deduct 1 credit for this view
         new_views_left = uc.consume_trial_view(company_id)
         
         st.warning(
             f"💡 **Freemium Mode:** You have **{new_views_left} free dashboard view(s)** remaining "
             "across your workspace before hitting the paywall. Upgrade early to prevent workflow interruption!"
         )
-        route_to_industry_dashboard(company_id)  # 🚨 Passes company_id into your real chart function!
+        route_to_industry_dashboard(company_id)  
         return
 
     # --- STATE C: FREE TRIAL EXHAUSTED (0 VIEWS LEFT) ---
-    # Block the charts completely and show the paywall!
     render_paywall_card(company_id, company_name, email)
 
 
@@ -183,7 +219,7 @@ def route_to_industry_dashboard(company_id):
     if not industry:
         industry = "Retail"
 
-    # 2. Dynamically import and trigger your existing functions without altering your code!
+    # 2. Dynamically import and trigger existing functions without altering code
     try:
         if industry.lower() == "healthcare":
             import dashboard_healthcare
