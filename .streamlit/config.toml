@@ -19,4 +19,6 @@ font = "sans serif"
 maxUploadSize = 10
 
 # Disables Streamlit CORS checks (helps smooth tunneling like Ngrok!)
-enableCORS = false
+enableCORS = false 
+
+enableXsrfProtection = false

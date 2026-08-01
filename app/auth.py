@@ -112,8 +112,13 @@ def show_login_page():
 
             if submit_login:
                 if login_email and login_company and login_password:
+                    
+                    # --- SANITIZE INPUTS TO PREVENT MOBILE KEYBOARD ERRORS ---
+                    clean_email = login_email.strip().lower()
+                    clean_company = login_company.strip()
+                    
                     success, user_data = user_connection.authenticate_user(
-                        login_email, login_company, login_password
+                        clean_email, clean_company, login_password
                     )
                     if success:
                         st.session_state["logged_in"] = True
@@ -158,14 +163,18 @@ def show_login_page():
                 submit_reset = st.form_submit_button("Reset Password", use_container_width=True)
 
                 if submit_reset:
-                    if not is_valid_email(reset_email): st.error("Please enter a valid email address.")
+                    # Sanitize reset inputs
+                    clean_reset_email = reset_email.strip().lower()
+                    clean_reset_company = reset_company.strip()
+                    
+                    if not is_valid_email(clean_reset_email): st.error("Please enter a valid email address.")
                     elif new_password != new_password_confirm: st.error("Passwords do not match!")
                     else:
                         is_valid, message = is_password_strong(new_password)
                         if not is_valid: st.error(message)
                         else:
                             success, reset_message = user_connection.reset_password(
-                                reset_email, reset_company, reset_key, new_password
+                                clean_reset_email, clean_reset_company, reset_key, new_password
                             )
                             if success: st.success(reset_message)
                             else: st.error(reset_message)
@@ -206,15 +215,19 @@ def show_register_page():
             submit_register = st.form_submit_button("Create Account →", use_container_width=True)
 
             if submit_register:
-                if not reg_company_name or not reg_email: st.error("Company Name and Email are required.")
-                elif not is_valid_email(reg_email): st.error("Please enter a valid email address.")
+                # Sanitize registration inputs
+                clean_reg_company_name = reg_company_name.strip()
+                clean_reg_email = reg_email.strip().lower()
+                
+                if not clean_reg_company_name or not clean_reg_email: st.error("Company Name and Email are required.")
+                elif not is_valid_email(clean_reg_email): st.error("Please enter a valid email address.")
                 elif reg_password != reg_password_confirm: st.error("Passwords do not match!")
                 else:
                     is_valid, message = is_password_strong(reg_password)
                     if not is_valid: st.error(message)
                     else:
                         success, db_message, recovery_key = user_connection.register_user(
-                            reg_company_name, reg_email, reg_industry, reg_password
+                            clean_reg_company_name, clean_reg_email, reg_industry, reg_password
                         )
                         if success:
                             st.success(db_message)
@@ -240,10 +253,8 @@ def show_user_profile():
         company_name = st.session_state.get('company_name', 'Your Workspace')
         industry = st.session_state.get('industry', 'Enterprise').capitalize()
         
-        # Pick an icon depending on their industry
         industry_icon = "🛒" if "retail" in industry.lower() else ("🏥" if "health" in industry.lower() else ("🏨" if "hospit" in industry.lower() else "🏢"))
         
-        # Welcoming, user-friendly SaaS Header
         st.markdown(f"""
         <div style="text-align:center; margin-bottom: 2rem; padding: 2rem; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);">
             <div style="font-size:3.5rem; margin-bottom: 0.5rem;">{industry_icon}</div>
@@ -257,7 +268,6 @@ def show_user_profile():
         </div>
         """, unsafe_allow_html=True)
         
-        # Action Buttons
         col_btn1, col_btn2 = st.columns(2)
         with col_btn1:
             if st.button("🚀 Go to Data Ingestion", use_container_width=True):

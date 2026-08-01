@@ -116,11 +116,15 @@ def register_user(company_name, email, industry, raw_password):
         cur.close()
         conn.close()
 
-# --- 4. THE LOGIN LOGIC ---
+# --- 4. THE LOGIN LOGIC (Case-Insensitive Match) ---
 def authenticate_user(email, company_name, raw_password):
     conn = get_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor) 
-    cur.execute("SELECT * FROM users WHERE email = %s AND company_name = %s;", (email, company_name))
+    # Using LOWER() on both parameters guarantees case-insensitivity
+    cur.execute("""
+        SELECT * FROM users 
+        WHERE LOWER(email) = LOWER(%s) AND LOWER(company_name) = LOWER(%s);
+    """, (email, company_name))
     user = cur.fetchone()
     cur.close()
     conn.close()
@@ -133,12 +137,15 @@ def authenticate_user(email, company_name, raw_password):
     else:
         return False, None
 
-# --- 5. THE PASSWORD RESET LOGIC ---
+# --- 5. THE PASSWORD RESET LOGIC (Case-Insensitive Match) ---
 def reset_password(email, company_name, raw_recovery_key, new_raw_password):
     conn = get_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     
-    cur.execute("SELECT * FROM users WHERE email = %s AND company_name = %s;", (email, company_name))
+    cur.execute("""
+        SELECT * FROM users 
+        WHERE LOWER(email) = LOWER(%s) AND LOWER(company_name) = LOWER(%s);
+    """, (email, company_name))
     user = cur.fetchone()
     
     if not user:
@@ -153,8 +160,8 @@ def reset_password(email, company_name, raw_recovery_key, new_raw_password):
         cur.execute("""
             UPDATE users 
             SET password_hash = %s 
-            WHERE email = %s AND company_name = %s;
-        """, (new_password_hash, email, company_name))
+            WHERE company_id = %s;
+        """, (new_password_hash, user['company_id']))
         
         conn.commit()
         cur.close()
@@ -166,14 +173,10 @@ def reset_password(email, company_name, raw_recovery_key, new_raw_password):
         return False, "Invalid Email, Company Name, or Recovery Key."
 
 # =========================================================
-# --- 6. BILLING & SUBSCRIPTION ENGINE (Phase 1 Additions) ---
+# --- 6. BILLING & SUBSCRIPTION ENGINE ---
 # =========================================================
 
 def get_subscription_info(company_id):
-    """
-    Checks whether a company has an active paid subscription or free trial credits.
-    Returns a dictionary with subscription status and remaining trial views.
-    """
     conn = get_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     
@@ -189,7 +192,6 @@ def get_subscription_info(company_id):
         conn.close()
         return None
 
-    # Check for active subscription row
     cur.execute("""
         SELECT * FROM subscriptions 
         WHERE company_id = %s AND status = 'ACTIVE' AND end_date > CURRENT_TIMESTAMP
@@ -210,10 +212,6 @@ def get_subscription_info(company_id):
     }
 
 def consume_trial_view(company_id):
-    """
-    Deducts 1 dashboard view credit from a free tier user.
-    Returns the updated number of views left.
-    """
     conn = get_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     
@@ -234,9 +232,6 @@ def consume_trial_view(company_id):
     return 0
 
 def record_pending_transaction(company_id, client_reference, amount, plan_type):
-    """
-    Creates a pending transaction receipt before sending the user to Hubtel.
-    """
     conn = get_connection()
     cur = conn.cursor()
     try:
@@ -254,7 +249,6 @@ def record_pending_transaction(company_id, client_reference, amount, plan_type):
         conn.close()
 
 def get_pending_transaction(client_reference):
-    """Retrieves a transaction by its client reference."""
     conn = get_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
     cur.execute("SELECT * FROM transactions WHERE client_reference = %s;", (client_reference,))
@@ -264,16 +258,9 @@ def get_pending_transaction(client_reference):
     return tx
 
 def activate_subscription_and_log_transaction(company_id, client_reference, hubtel_tx_id, payment_method, plan_type, duration_days=30):
-    """
-    Upon payment verification:
-    1. Updates transactions table to SUCCESS.
-    2. Updates user table subscription_tier to 'Pro' or 'Enterprise'.
-    3. Adds an active record to the subscriptions table with accurate expiration math.
-    """
     conn = get_connection()
     cur = conn.cursor()
     try:
-        # 1. Update transaction record
         cur.execute("""
             UPDATE transactions 
             SET payment_status = 'SUCCESS',
@@ -283,7 +270,6 @@ def activate_subscription_and_log_transaction(company_id, client_reference, hubt
             WHERE client_reference = %s AND company_id = %s;
         """, (hubtel_tx_id, payment_method, client_reference, company_id))
 
-        # 2. Upgrade user tier
         new_tier = 'Enterprise' if 'yearly' in plan_type.lower() else 'Pro'
         cur.execute("""
             UPDATE users 
@@ -291,7 +277,6 @@ def activate_subscription_and_log_transaction(company_id, client_reference, hubt
             WHERE company_id = %s;
         """, (new_tier, company_id))
 
-        # 3. Insert active subscription contract
         cur.execute("""
             INSERT INTO subscriptions (company_id, plan_type, status, start_date, end_date)
             VALUES (%s, %s, 'ACTIVE', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP + (%s || ' days')::INTERVAL);
@@ -304,4 +289,4 @@ def activate_subscription_and_log_transaction(company_id, client_reference, hubt
         return False, f"Failed to activate subscription: {e}"
     finally:
         cur.close()
-        conn.close()
+        conn.close() 
