@@ -14,4 +14,4 @@ uuid
 plotly 
 extra-streamlit-components
 cryptography
-
+streamlit-lottie

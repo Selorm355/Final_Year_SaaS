@@ -57,3 +57,21 @@ def show_data_preview_page():
                 st.dataframe(silver_df.drop(columns=['company_id']), use_container_width=True)
         except Exception as e:
             st.error(f"Waiting for clean records to build...")
+
+    # --- 3. SEAMLESS UX ROUTING BUTTON ---
+    st.divider()
+    
+    # Center-aligning the text using HTML injection
+    st.markdown("<h3 style='text-align: center;'>🚀 Ready for Insights?</h3>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center;'>Your data has been successfully mapped, cleaned, and warehoused. It is ready for AI analysis.</p>", unsafe_allow_html=True)
+    
+    st.write("") # Quick spacing
+    
+    # Using 3 columns to center the button perfectly
+    col1, col2, col3 = st.columns([1, 1.5, 1])
+    
+    with col2:
+        # use_container_width=True makes it fill the middle column beautifully
+        if st.button("Generate Enterprise Dashboard", type="primary", use_container_width=True):
+            st.session_state["go_to_page"] = "4. Premium Dashboard"
+            st.rerun()

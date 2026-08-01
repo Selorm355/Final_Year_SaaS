@@ -1,6 +1,16 @@
 import streamlit as st
+import os
 import user_connection as uc 
 import payment_engine as pe
+
+def inject_custom_css():
+    """Reads the CSS file and injects it into Streamlit."""
+    css_path = os.path.join(os.path.dirname(__file__), "global_style.css")
+    try:
+        with open(css_path) as f:
+            st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+    except FileNotFoundError:
+        pass
 
 # =========================================================
 # --- 1. THE PAYWALL UI (Shown when trial views hit 0) ---
@@ -126,6 +136,10 @@ def render_dashboard_gatekeeper():
     Main entry point for the Premium Dashboard page.
     Checks database subscription tier and trial credits before rendering graphs.
     """
+    
+    # Inject custom CSS layout immediately upon page load
+    inject_custom_css()
+    
     # 0. CATCH PAYSTACK REDIRECT: Check if Paystack sent the user back with a reference in the URL!
     query_params = st.query_params
     if "reference" in query_params:

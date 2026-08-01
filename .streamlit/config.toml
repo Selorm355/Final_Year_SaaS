@@ -1,2 +1,22 @@
+[theme]
+# Matches your primary violet gradient
+primaryColor = "#7b2cbf"
+
+# Deep, premium dark background
+backgroundColor = "#13131f"
+
+# Slightly lighter shade for sidebar and secondary elements
+secondaryBackgroundColor = "#1e1e2f"
+
+# Crisp white text for maximum readability
+textColor = "#ffffff"
+
+# Modern, clean sans-serif font
+font = "sans serif"
+
 [server]
+# Your existing max upload size limit (10MB)
 maxUploadSize = 10
+
+# Disables Streamlit CORS checks (helps smooth tunneling like Ngrok!)
+enableCORS = false

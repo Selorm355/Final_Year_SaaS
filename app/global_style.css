@@ -1,0 +1,111 @@
+/* --- GLOBAL BUTTON STYLING (The Violet Gradient) --- */
+button[kind="primary"] {
+    background: linear-gradient(135deg, #4a0072 0%, #7b2cbf 100%) !important;
+    border: none !important;
+    border-radius: 8px !important;
+    color: white !important;
+    box-shadow: 0 4px 15px rgba(123, 44, 191, 0.4) !important;
+    transition: all 0.3s ease !important;
+}
+button[kind="primary"]:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(123, 44, 191, 0.6) !important;
+}
+
+/* --- THE UPLOAD DROPZONE --- */
+[data-testid="stFileUploadDropzone"] {
+    background: rgba(123, 44, 191, 0.05) !important;
+    border: 2px dashed rgba(123, 44, 191, 0.5) !important;
+    border-radius: 12px !important;
+    padding: 3rem !important;
+    transition: all 0.3s ease !important;
+}
+[data-testid="stFileUploadDropzone"]:hover {
+    background: rgba(123, 44, 191, 0.15) !important;
+    border-color: #7b2cbf !important;
+    box-shadow: 0 0 20px rgba(123, 44, 191, 0.2) !important;
+}
+
+/* --- INFO BOXES & NOTIFICATIONS (Glassmorphism) --- */
+[data-testid="stNotification"], [data-testid="stAlert"] {
+    background: rgba(30, 30, 40, 0.6) !important;
+    backdrop-filter: blur(10px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-left: 4px solid #7b2cbf !important;
+    border-radius: 8px !important;
+}
+
+/* --- METRIC CARDS (For File Metadata) --- */
+[data-testid="stMetric"] {
+    background: linear-gradient(135deg, rgba(30,30,40,0.8), rgba(45,30,60,0.8)) !important;
+    border: 1px solid rgba(123, 44, 191, 0.2) !important;
+    padding: 15px !important;
+    border-radius: 10px !important;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2) !important;
+}
+
+/* --- EXPANDER CARDS --- */
+[data-testid="stExpander"] {
+    border: 1px solid rgba(123, 44, 191, 0.2) !important;
+    border-radius: 8px !important;
+    background: rgba(20, 20, 25, 0.4) !important;
+}
+
+
+/* =========================================
+   PREMIUM DASHBOARD STYLES
+   ========================================= */
+
+/* --- HIDE STREAMLIT BRANDING & HEADER --- */
+[data-testid="stHeader"] {
+    display: none !important;
+}
+footer {
+    display: none !important;
+}
+
+/* --- ENHANCED KPI METRIC CARDS --- */
+[data-testid="stMetricValue"] {
+    font-size: 1.8rem !important;
+    font-weight: 700 !important;
+    color: #ffffff !important;
+}
+[data-testid="stMetricLabel"] {
+    font-size: 0.9rem !important;
+    color: #a0a0b0 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 1px !important;
+}
+
+/* --- PREMIUM SAAS TABS --- */
+[data-testid="stTabs"] button {
+    background-color: transparent !important;
+    border: none !important;
+    border-bottom: 2px solid transparent !important;
+    color: #a0a0b0 !important;
+    font-weight: 600 !important;
+    padding: 0.5rem 1rem !important;
+    transition: all 0.3s ease !important;
+}
+
+/* Hover state for tabs */
+[data-testid="stTabs"] button:hover {
+    color: #ffffff !important;
+}
+
+/* Active Tab state (The Glowing Violet Underline) */
+[data-testid="stTabs"] button[aria-selected="true"] {
+    color: #ffffff !important;
+    border-bottom: 3px solid #7b2cbf !important;
+    background: linear-gradient(180deg, rgba(123,44,191,0) 0%, rgba(123,44,191,0.15) 100%) !important;
+    border-radius: 4px 4px 0 0 !important;
+}
+
+/* --- PLOTLY CHART CONTAINERS --- */
+/* Gives the charts a subtle dark background so they pop */
+[data-testid="stPlotlyChart"] {
+    background: rgba(20, 20, 25, 0.4) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+    border-radius: 12px !important;
+    padding: 10px !important;
+}

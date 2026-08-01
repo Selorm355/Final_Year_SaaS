@@ -40,7 +40,7 @@ def is_live_paystack_configured():
 # --- 2. INITIATE HOSTED CHECKOUT LINK ---
 # =========================================================
 
-def create_checkout_link(company_id, company_name, email, plan_key="MONTHLY", return_url="http://localhost:8501"):
+def create_checkout_link(company_id, company_name, email, plan_key="MONTHLY", return_url="https://pounce-curable-pupil.ngrok-free.dev"):
     """
     1. Generates a unique client transaction reference.
     2. Writes a PENDING transaction receipt to PostgreSQL.
