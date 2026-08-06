@@ -4,3 +4,4 @@ omnipulse_dbt/profiles.yml
 __pycache__/
 *.py[cod]
 venv/
+.DS_Store
