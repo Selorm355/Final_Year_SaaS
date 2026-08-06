@@ -151,7 +151,7 @@ def render_dashboard(company_id):
         with col_right:
             fig_donut = px.pie(
                 top_10_products, values='volume', names='item_name', hole=0.4, 
-                title="Volume Share (Top Products)" # Dynamic title
+                title="Quantity Sold (Top Products)" # Dynamic title
             )
             st.plotly_chart(fig_donut, use_container_width=True)
             
