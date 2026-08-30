@@ -3,8 +3,13 @@ import json
 import os
 from cryptography.fernet import Fernet 
 
-# --- 1. PAGE CONFIG MUST BE THE FIRST STREAMLIT COMMAND ---
-st.set_page_config(page_title="OmniPulse Analytics", page_icon="📊", layout="wide")
+# --- 1. PAGE CONFIG ---
+st.set_page_config(
+    page_title="OmniPulse Analytics", 
+    page_icon="📊", 
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
 import auth  
 import user_connection 
@@ -13,13 +18,12 @@ import show_clean_data
 import premium_dashboard 
 
 # --- ENCRYPTION SETUP ---
-# Pulling the secret key securely from the environment variable
 fernet_secret = os.getenv("FERNET_KEY")
 if not fernet_secret:
-    st.error("🚨 CRITICAL CONFIG ERROR: FERNET_KEY is missing from environment variables. Check your .env file.")
+    st.error("CRITICAL CONFIG ERROR: FERNET_KEY is missing from environment variables. Check your .env file.")
     st.stop()
 
-FERNET_KEY = fernet_secret.encode() # Convert string from .env to bytes for Fernet
+FERNET_KEY = fernet_secret.encode()
 cipher_suite = Fernet(FERNET_KEY)
 
 # --- Database Initialization ---
@@ -32,12 +36,9 @@ if "logged_in" not in st.session_state:
     st.session_state["logged_in"] = False
 
 # --- 2. THE SECURE TOKEN HYDRATOR ---
-# Instantly reads the URL, decrypts the token, and hydrates the session
 if not st.session_state["logged_in"] and "token" in st.query_params:
     try:
         encrypted_token = st.query_params["token"]
-        
-        # 🚨 Decrypt the payload before reading it!
         decrypted_bytes = cipher_suite.decrypt(encrypted_token.encode())
         session_data = json.loads(decrypted_bytes.decode())
         
@@ -45,51 +46,68 @@ if not st.session_state["logged_in"] and "token" in st.query_params:
         st.session_state["company_id"] = session_data["company_id"]
         st.session_state["industry"] = session_data["industry"]
         st.session_state["company_name"] = session_data["company_name"]
-        
-        # Hydrate the full user dictionary so the Paywall Gatekeeper can read it!
         st.session_state["user"] = session_data
         
-        # Route them safely to the dashboard upon refresh
-        st.session_state["go_to_page"] = "2. Data Ingestion"
+        st.session_state["go_to_page"] = "Data Ingestion"
+        
+        st.query_params.clear()
     except Exception:
-        # If the token was tampered with, Fernet throws an InvalidToken exception.
-        # We silently fail and leave them logged out.
         pass 
 
-# Initialize the default starting page
-if "sidebar_nav" not in st.session_state:
-    st.session_state["sidebar_nav"] = "1. Account Access"
-
 if "prev_sidebar_nav" not in st.session_state:
-    st.session_state["prev_sidebar_nav"] = st.session_state["sidebar_nav"]
+    st.session_state["prev_sidebar_nav"] = "Account Access"
 
-# --- THE TELEPORTATION INTERCEPTOR ---
 if "go_to_page" in st.session_state:
     st.session_state["sidebar_nav"] = st.session_state["go_to_page"]
     del st.session_state["go_to_page"] 
 
-# Sidebar Navigation
-st.sidebar.title("OmniPulse SaaS")
-page = st.sidebar.radio(
-    "Navigation", 
-    ["1. Account Access", "2. Data Ingestion", "3. Data Preview", "4. Premium Dashboard"],
-    key="sidebar_nav" 
-)
+# --- 3. DYNAMIC UI CONTROLLER ---
+ui_container = st.empty()
 
-# --- Page Routing ---
-if page == "1. Account Access":
-    if st.session_state.get("prev_sidebar_nav") != "1. Account Access":
+if not st.session_state["logged_in"]:
+    # 🔒 LOGGED OUT STATE
+    page = "Account Access"
+    st.session_state["sidebar_nav"] = page
+    
+    # Hide the sidebar and toggle arrow on the auth page
+    ui_container.markdown("""
+        <style>
+            [data-testid="stSidebar"] { display: none !important; }
+            [data-testid="collapsedControl"] { display: none !important; }
+        </style>
+    """, unsafe_allow_html=True)
+    
+else:
+    # 🔓 LOGGED IN STATE
+    ui_container.empty() # Clear the CSS so arrows and sidebar appear natively
+    st.sidebar.title("OmniPulse SaaS")
+    
+    # Clean menu with Account Access included and numbers removed
+    nav_options = ["Account Access", "Data Ingestion", "Data Preview", "Premium Dashboard", "Logout"]
+    
+    if st.session_state.get("sidebar_nav") not in nav_options:
+        st.session_state["sidebar_nav"] = "Data Ingestion"
+        
+    page = st.sidebar.radio("Navigation", nav_options, key="sidebar_nav")
+
+# --- 4. SECURE PAGE ROUTING ---
+if page == "Account Access":
+    if st.session_state.get("prev_sidebar_nav") != "Account Access":
         st.session_state["auth_screen"] = "landing"
     auth.show_auth_page()
 
-elif page == "2. Data Ingestion":
+elif page == "Data Ingestion":
     data_ingestion.show_ingestion_page()
 
-elif page == "3. Data Preview":
+elif page == "Data Preview":
     show_clean_data.show_data_preview_page()
 
-# 🚨 UPDATED: Now points to the Trial & Paywall Gatekeeper!
-elif page == "4. Premium Dashboard":
+elif page == "Premium Dashboard":
     premium_dashboard.render_dashboard_gatekeeper()
+
+elif page == "Logout":
+    st.session_state.clear()
+    st.query_params.clear()
+    st.rerun()
 
 st.session_state["prev_sidebar_nav"] = page

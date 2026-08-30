@@ -56,14 +56,6 @@ button[kind="primary"]:hover {
    PREMIUM DASHBOARD STYLES
    ========================================= */
 
-/* --- HIDE STREAMLIT BRANDING & HEADER --- */
-[data-testid="stHeader"] {
-    display: none !important;
-}
-footer {
-    display: none !important;
-}
-
 /* --- ENHANCED KPI METRIC CARDS --- */
 [data-testid="stMetricValue"] {
     font-size: 1.8rem !important;

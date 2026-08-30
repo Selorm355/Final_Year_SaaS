@@ -106,7 +106,7 @@ def process_and_upload(df, expected_columns, company_id, industry, filename):
         try:
             process_minio_to_bronze()
             animation_container.empty()
-            st.session_state["go_to_page"] = "3. Data Preview"
+            st.session_state["go_to_page"] = "Data Preview" # MATCHES NEW SIDEBAR EXACTLY
             st.rerun()
         except Exception as e:
             animation_container.empty()
@@ -114,7 +114,7 @@ def process_and_upload(df, expected_columns, company_id, industry, filename):
 
 # --- 3. THE MAIN UI WIZARD ---
 def show_ingestion_page():
-    inject_custom_css() # <-- Applies your violet theme immediately!
+    inject_custom_css() 
     
     if not st.session_state.get("logged_in"):
         st.error("🚨 Access Denied. Please log in to access the Data Ingestion portal.")
@@ -141,7 +141,7 @@ def show_ingestion_page():
     st.download_button(
         label=f"⬇️ Download Perfect {industry} Template (.csv)",
         data=template_csv, file_name=f"{industry}_template.csv", mime="text/csv",
-        type="primary" # Applies your custom gradient button style!
+        type="primary" 
     )
     st.divider()
 
@@ -174,12 +174,11 @@ def show_ingestion_page():
         # --- WIZARD STEP 3 (Dynamic Metadata) ---
         st.markdown("### Step 3: Validation & Execution")
         
-        # Sleek Data Snapshot Cards
         m1, m2, m3 = st.columns(3)
         m1.metric("File Size", f"{file_size_mb:.2f} MB")
         m2.metric("Total Rows Detected", f"{len(df):,}")
         m3.metric("Columns Detected", f"{len(uploaded_columns)}")
-        st.write("") # Quick spacing
+        st.write("") 
 
         if len(uploaded_columns) < len(expected_columns):
             st.error(f"❌ Insufficient Data: Your file only contains {len(uploaded_columns)} columns, but the {industry} dashboard requires at least {len(expected_columns)} distinct columns.")
