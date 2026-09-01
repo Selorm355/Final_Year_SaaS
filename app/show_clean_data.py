@@ -2,8 +2,10 @@ import streamlit as st
 import pandas as pd
 import os
 from sqlalchemy import create_engine
+import navigation
 
 def show_data_preview_page():
+    navigation.render_back_button("Data Ingestion", "Data Ingestion")
     st.title("🗄️ Data Preview")
     
     if not st.session_state.get("logged_in"):
@@ -73,5 +75,5 @@ def show_data_preview_page():
     with col2:
         # use_container_width=True makes it fill the middle column beautifully
         if st.button("Generate Enterprise Dashboard", type="primary", use_container_width=True):
-            st.session_state["go_to_page"] = "4. Premium Dashboard"
+            st.session_state["active_page"] = "Premier Dashboard"
             st.rerun()

@@ -93,14 +93,14 @@ def render_dashboard(company_id):
                 )
                 fig_trend = px.line(
                     plot_df, x='visit_date', y='predicted_value', color='Type', line_dash='Type',
-                    color_discrete_map={'Historical Data': '#2a9d8f', 'Forecast (AI)': '#ff9f1c'},
+                    color_discrete_map={'Historical Data': '#008080', 'Forecast (AI)': '#006666'},
                     labels={'visit_date': 'Date', 'predicted_value': 'Revenue (GH₵)'}
                 )
         else:
             fig_trend = px.area(
                 trend_df, x='visit_date', y='consultation_fee_ghs',
                 labels={'visit_date': 'Date', 'consultation_fee_ghs': 'Revenue (GH₵)'},
-                color_discrete_sequence=['#2a9d8f'] 
+                color_discrete_sequence=['#008080']
             )
 
         fig_trend.update_traces(hovertemplate="<b>Date:</b> %{x}<br><b>Revenue:</b> GH₵ %{y:,.2f}<extra></extra>")
@@ -122,7 +122,7 @@ def render_dashboard(company_id):
                 x='patient_count', y='diagnosis', orientation='h',
                 title="Top Diagnoses (By Patient Volume)",
                 labels={'patient_count': 'Number of Cases', 'diagnosis': ''},
-                color_discrete_sequence=['#e76f51']
+                color_discrete_sequence=['#006666']
             )
             st.plotly_chart(fig_diag_vol, use_container_width=True)
             
@@ -132,7 +132,7 @@ def render_dashboard(company_id):
                 x='revenue', y='diagnosis', orientation='h',
                 title="Top Diagnoses (By Revenue Generated)",
                 labels={'revenue': 'Total Revenue (GH₵)', 'diagnosis': ''},
-                color_discrete_sequence=['#264653']
+                color_discrete_sequence=['#2F4F4F']
             )
             st.plotly_chart(fig_diag_rev, use_container_width=True)
 
@@ -170,7 +170,7 @@ def render_dashboard(company_id):
                 x='avg_fee', y='treatment_type', orientation='h',
                 title="Average Revenue per Treatment Type",
                 labels={'avg_fee': 'Avg Revenue (GH₵)', 'treatment_type': ''},
-                color_discrete_sequence=['#e9c46a'],
+                color_discrete_sequence=['#008080'],
                 text='avg_fee'
             )
             fig_avg.update_traces(texttemplate='GH₵ %{text:,.2f}', textposition='inside', insidetextanchor='middle')
@@ -192,6 +192,6 @@ def render_dashboard(company_id):
             traffic_stats, x='day_of_week', y='patient_id',
             title="Patient Volume by Day of the Week",
             labels={'day_of_week': '', 'patient_id': 'Number of Visits'},
-            color_discrete_sequence=['#457b9d']
+            color_discrete_sequence=['#006666']
         )
         st.plotly_chart(fig_traffic, use_container_width=True)

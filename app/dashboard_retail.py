@@ -31,8 +31,8 @@ CUSTOM_CSS = """
 
     /* Overall App Background */
     .stApp {
-        background-color: #EDF1F7 !important;
-        color: #1E2530 !important;
+        background-color: #F0F8FF !important;
+        color: #2F4F4F !important;
     }
 
     /* Main Container Padding */
@@ -45,10 +45,10 @@ CUSTOM_CSS = """
     /* Custom KPI Metric Cards */
     .orbit-card {
         background: #FFFFFF;
-        border-radius: 22px;
+        border-radius: 15px;
         padding: 20px 24px;
-        box-shadow: 0 8px 24px rgba(149, 157, 165, 0.08);
-        border: 1px solid rgba(230, 235, 245, 0.8);
+        box-shadow: 0 8px 24px rgba(0, 128, 128, 0.15);
+        border: 1px solid #E0E0E0;
         transition: transform 0.15s ease-in-out;
     }
     .orbit-card:hover {
@@ -59,13 +59,13 @@ CUSTOM_CSS = """
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.6px;
-        color: #8C98A9;
+        color: #5A7B7B;
         margin-bottom: 8px;
     }
     .orbit-value {
         font-size: 1.65rem;
         font-weight: 700;
-        color: #121826;
+        color: #2F4F4F;
         letter-spacing: -0.5px;
     }
     .orbit-badge {
@@ -77,58 +77,95 @@ CUSTOM_CSS = """
         margin-top: 6px;
     }
     .badge-positive {
-        background: #E8F8F0;
-        color: #0E9F6E;
+        background: rgba(0, 128, 128, 0.12);
+        color: #006666;
     }
 
     /* Chart Containers */
     .orbit-chart-card {
         background: #FFFFFF;
-        border-radius: 24px;
+        border-radius: 15px;
         padding: 24px;
-        box-shadow: 0 8px 24px rgba(149, 157, 165, 0.08);
-        border: 1px solid rgba(230, 235, 245, 0.8);
+        box-shadow: 0 8px 24px rgba(0, 128, 128, 0.15);
+        border: 1px solid #E0E0E0;
         margin-bottom: 1.5rem;
     }
     .chart-header {
         font-size: 1.15rem;
         font-weight: 700;
-        color: #121826;
+        color: #2F4F4F;
         margin-bottom: 4px;
     }
     .chart-subtitle {
         font-size: 0.82rem;
-        color: #8C98A9;
+        color: #5A7B7B;
         margin-bottom: 16px;
     }
 
-    /* Style Streamlit Tabs to match soft pill design */
+    [data-testid="stPlotlyChart"] {
+        width: 100% !important;
+        max-width: 100% !important;
+        height: 400px !important;
+        max-height: 400px !important;
+        overflow: hidden !important;
+    }
+
+    [data-testid="stPlotlyChart"] > div {
+        max-width: 100% !important;
+        overflow: hidden !important;
+    }
+
+    /* =========================================================
+       CENTERED TEAL TABS (15px ROUNDED)
+       ========================================================= */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 8px;
-        background-color: #E2E8F0;
-        padding: 6px;
-        border-radius: 16px;
+        gap: 12px !important;
+        background-color: transparent !important;
+        padding: 10px 0 !important;
+        border-bottom: none !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+        width: 100% !important;
     }
+
+    .stTabs [data-baseweb="tab-highlight"],
+    .stTabs [data-baseweb="tab-border"] {
+        display: none !important;
+    }
+
+    /* Inactive Tab Pills (15px rounded) */
     .stTabs [data-baseweb="tab"] {
-        border-radius: 12px;
-        padding: 8px 18px;
-        font-weight: 600;
-        font-size: 0.88rem;
-        color: #64748B;
-        border: none !important;
-        background: transparent !important;
-    }
-    .stTabs [aria-selected="true"] {
         background-color: #FFFFFF !important;
-        color: #0F172A !important;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05) !important;
+        color: #006666 !important;
+        border: 1.5px solid #008080 !important;
+        border-radius: 15px !important;
+        padding: 8px 22px !important;
+        font-weight: 600 !important;
+        font-size: 0.9rem !important;
+        transition: all 0.2s ease-in-out !important;
+        box-shadow: 0 2px 6px rgba(0, 128, 128, 0.08) !important;
+    }
+
+    .stTabs [data-baseweb="tab"]:hover {
+        background-color: rgba(0, 128, 128, 0.08) !important;
+        color: #004D40 !important;
+    }
+
+    /* Active Selected Tab Pill */
+    .stTabs [aria-selected="true"] {
+        background-color: #008080 !important;
+        color: #FFFFFF !important;
+        border: 1.5px solid #008080 !important;
+        border-radius: 15px !important;
+        box-shadow: 0 4px 14px rgba(0, 128, 128, 0.35) !important;
     }
     
     /* Clean up dataframe display */
     [data-testid="stDataFrame"] {
-        border-radius: 16px;
+        border-radius: 15px;
         overflow: hidden;
-        border: 1px solid #E2E8F0;
+        border: 1px solid #E0E0E0;
     }
 </style>
 """
@@ -182,8 +219,8 @@ def render_dashboard(company_id=None):
     # --- Top Navigation Header ---
     c_title, c_user = st.columns([4, 1])
     with c_title:
-        st.markdown("<h2 style='font-weight:700; color:#121826; margin-bottom: 0;'>Enterprise Retail Command Center</h2>", unsafe_allow_html=True)
-        st.markdown("<p style='color:#8C98A9; font-size:0.9rem; margin-top:2px;'>Real-time metrics, unit economics, and performance insights</p>", unsafe_allow_html=True)
+        st.markdown("<h2 style='font-weight:700; color:#2F4F4F; margin-bottom: 0;'>Enterprise Retail Command Center</h2>", unsafe_allow_html=True)
+        st.markdown("<p style='color:#5A7B7B; font-size:0.9rem; margin-top:2px;'>Real-time metrics, unit economics, and performance insights</p>", unsafe_allow_html=True)
 
     st.markdown("<div style='height: 12px;'></div>", unsafe_allow_html=True)
 
@@ -231,9 +268,10 @@ def render_dashboard(company_id=None):
             </div>
         """, unsafe_allow_html=True)
 
-    st.markdown("<div style='height: 24px;'></div>", unsafe_allow_html=True)
+    # --- HORIZONTAL DIVIDER ON TOP OF TABS ---
+    st.divider()
 
-    # --- Tabs Layout ---
+    # --- CENTERED TABBED NAVIGATION ---
     tab1, tab2, tab3, tab4 = st.tabs([
         "📈 Executive Overview", 
         "🛍️ Product Intelligence", 
@@ -243,18 +281,18 @@ def render_dashboard(company_id=None):
 
     # Shared Chart Layout Theme
     plot_layout_defaults = dict(
-        paper_bgcolor='rgba(0,0,0,0)',
-        plot_bgcolor='rgba(0,0,0,0)',
-        font=dict(family="Plus Jakarta Sans, sans-serif", color="#64748B", size=12),
+        paper_bgcolor='#FFFFFF',
+        plot_bgcolor='#FFFFFF',
+        font=dict(family="Plus Jakarta Sans, sans-serif", color="#5A7B7B", size=12),
         margin=dict(t=20, l=10, r=10, b=10),
+        height=400,
         xaxis=dict(showgrid=False, zeroline=False),
-        yaxis=dict(showgrid=True, gridcolor="#F1F5F9", zeroline=False),
+        yaxis=dict(showgrid=True, gridcolor="#E0E0E0", zeroline=False),
         hoverlabel=dict(bgcolor="#FFFFFF", font_size=12, font_family="Plus Jakarta Sans")
     )
 
     # === TAB 1: EXECUTIVE OVERVIEW ===
     with tab1:
-        st.markdown('<div class="orbit-chart-card">', unsafe_allow_html=True)
         col_ctrl1, col_ctrl2 = st.columns([3, 1])
         with col_ctrl1:
             time_grouping = st.radio("Resolution:", options=["Day", "Week", "Month"], horizontal=True, label_visibility="collapsed")
@@ -280,23 +318,21 @@ def render_dashboard(company_id=None):
             )
             fig_trend = px.line(
                 plot_df, x='transaction_date', y='predicted_value', color='Type',
-                color_discrete_map={'Historical Data': '#3B82F6', 'Forecast (AI)': '#EC4899'}
+                color_discrete_map={'Historical Data': '#008080', 'Forecast (AI)': '#006666'}
             )
         else:
             fig_trend = go.Figure()
-            # Smooth rounded area curve matching the Dribbble style
             fig_trend.add_trace(go.Scatter(
                 x=trend_df['transaction_date'],
                 y=trend_df['total_sale_value'],
                 fill='tozeroy',
-                fillcolor='rgba(59, 130, 246, 0.08)',
-                line=dict(color='#3B82F6', width=3, shape='spline'),
+                fillcolor='rgba(0, 128, 128, 0.12)',
+                line=dict(color='#008080', width=3, shape='spline'),
                 hovertemplate="<b>%{x|%b %d, %Y}</b><br>Revenue: GH₵ %{y:,.2f}<extra></extra>"
             ))
 
         fig_trend.update_layout(**plot_layout_defaults)
         st.plotly_chart(fig_trend, use_container_width=True, config={'displayModeBar': False})
-        st.markdown('</div>', unsafe_allow_html=True)
 
     # === TAB 2: PRODUCT INTELLIGENCE ===
     with tab2:
@@ -314,7 +350,7 @@ def render_dashboard(company_id=None):
             fig_bar = px.bar(
                 top_10.sort_values(by='revenue', ascending=True), 
                 x='revenue', y='item_name', orientation='h',
-                color_discrete_sequence=['#4F46E5']
+                color_discrete_sequence=['#008080']
             )
             fig_bar.update_layout(**plot_layout_defaults)
             fig_bar.update_traces(marker_line_width=0, marker=dict(cornerradius=6), hovertemplate="<b>%{y}</b><br>Revenue: GH₵ %{x:,.2f}<extra></extra>")
@@ -323,8 +359,7 @@ def render_dashboard(company_id=None):
 
         with col_right:
             st.markdown('<div class="orbit-chart-card"><div class="chart-header">Volume Distribution</div><div class="chart-subtitle">Breakdown of total units sold</div>', unsafe_allow_html=True)
-            # Modern pastel donut palette
-            orbit_colors = ['#4F46E5', '#38BDF8', '#F43F5E', '#FB923C', '#10B981', '#A855F7', '#FBBF24', '#94A3B8']
+            orbit_colors = ['#008080', '#006666', '#2F4F4F', '#5A7B7B', '#E0E0E0']
             fig_donut = px.pie(
                 top_10, values='volume', names='item_name', hole=0.6,
                 color_discrete_sequence=orbit_colors
@@ -359,14 +394,14 @@ def render_dashboard(company_id=None):
             fig_margin = px.bar(
                 all_margin_items.sort_values(by='margin_pct', ascending=True),
                 x='margin_pct', y='item_name', orientation='h',
-                color_discrete_sequence=['#0D9488'], text='profit'
+                color_discrete_sequence=['#006666'], text='profit'
             )
             fig_margin.update_traces(
                 texttemplate='GH₵ %{text:,.0f}', textposition='inside',
                 marker=dict(cornerradius=4),
                 hovertemplate="<b>%{y}</b><br>Margin: %{x:.1f}%<br>Profit: GH₵ %{text:,.2f}<extra></extra>"
             )
-            fig_margin.update_layout(**plot_layout_defaults, height=650)
+            fig_margin.update_layout(**plot_layout_defaults)
             st.plotly_chart(fig_margin, use_container_width=True, config={'displayModeBar': False})
             st.markdown('</div>', unsafe_allow_html=True)
 
@@ -375,9 +410,9 @@ def render_dashboard(company_id=None):
             fig_scatter = px.scatter(
                 all_margin_items, x='margin_pct', y='profit', size='revenue',
                 color='margin_pct', hover_name='item_name',
-                color_continuous_scale="Tealgrn"
+                color_continuous_scale=['#008080', '#006666']
             )
-            fig_scatter.update_layout(**plot_layout_defaults, height=650)
+            fig_scatter.update_layout(**plot_layout_defaults)
             fig_scatter.update_traces(
                 hovertemplate="<b>%{hovertext}</b><br>Margin: %{x:.1f}%<br>Profit: GH₵ %{y:,.2f}<extra></extra>"
             )
@@ -395,7 +430,7 @@ def render_dashboard(company_id=None):
             
             fig_day = px.bar(
                 day_stats, x='day_of_week', y='total_sale_value',
-                color_discrete_sequence=['#6366F1']
+                color_discrete_sequence=['#008080']
             )
             fig_day.update_layout(**plot_layout_defaults)
             fig_day.update_traces(marker=dict(cornerradius=8), hovertemplate="<b>%{x}</b><br>Revenue: GH₵ %{y:,.2f}<extra></extra>")
@@ -408,7 +443,7 @@ def render_dashboard(company_id=None):
             
             fig_basket = px.histogram(
                 basket_sizes, x='quantity',
-                color_discrete_sequence=['#F43F5E'], nbins=15
+                color_discrete_sequence=['#006666'], nbins=15
             )
             fig_basket.update_layout(**plot_layout_defaults)
             fig_basket.update_traces(marker=dict(cornerradius=6), hovertemplate="Basket Size: %{x} items<br>Orders: %{y}<extra></extra>")

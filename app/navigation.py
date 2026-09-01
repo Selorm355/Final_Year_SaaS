@@ -4,14 +4,14 @@ def inject_global_theme():
     """Injects the Orbit CRM light theme, removes top header line, and styles circular controls."""
     dark = st.session_state.get("dark_mode", False)
     
-    bg_canvas = "#0F172A" if dark else "#F1F5F9"
-    bg_surface = "#1E293B" if dark else "#FFFFFF"
-    text_primary = "#F8FAFC" if dark else "#0F172A"
-    text_secondary = "#94A3B8" if dark else "#64748B"
-    input_bg = "#1E293B" if dark else "#FFFFFF"
-    input_border = "#334155" if dark else "#CBD5E1"
-    sidebar_bg = "#1E293B" if dark else "#FFFFFF"
-    card_border = "rgba(255,255,255,0.08)" if dark else "#E2E8F0"
+    bg_canvas = "#2F4F4F" if dark else "#F0F8FF"
+    bg_surface = "#2F4F4F" if dark else "#FFFFFF"
+    text_primary = "#F0F8FF" if dark else "#2F4F4F"
+    text_secondary = "#E0E0E0" if dark else "#5A7B7B"
+    input_bg = "#2F4F4F" if dark else "#FFFFFF"
+    input_border = "#E0E0E0"
+    sidebar_bg = "#2F4F4F" if dark else "#FFFFFF"
+    card_border = "#E0E0E0"
 
     css = f"""
     <style>
@@ -59,11 +59,19 @@ def inject_global_theme():
             box-shadow: none !important;
         }}
 
+        [data-testid="stSidebar"][aria-expanded="false"] {{
+            display: block !important;
+            visibility: visible !important;
+            transform: none !important;
+            width: 78px !important;
+            min-width: 78px !important;
+        }}
+
         [data-testid="stSidebar"] > div:first-child {{
             background-color: {sidebar_bg} !important;
             border-radius: 24px !important;
             border: 1px solid {card_border} !important;
-            box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05) !important;
+            box-shadow: 0 10px 30px rgba(0, 128, 128, 0.2) !important;
             padding: 16px 8px !important;
             display: flex !important;
             flex-direction: column !important;
@@ -91,15 +99,19 @@ def inject_global_theme():
         }}
 
         [data-testid="stSidebar"] .stButton button:hover {{
-            background-color: #F1F5F9 !important;
-            color: #4F46E5 !important;
+            background-color: rgba(0, 128, 128, 0.12) !important;
+            color: #006666 !important;
         }}
 
         [data-testid="stSidebar"] .stButton button[kind="primary"] {{
-            background-color: #4F46E5 !important;
-            color: #FFFFFF !important;
-            box-shadow: 0 6px 18px rgba(79, 70, 229, 0.35) !important;
+            background-color: #006666 !important;
+            color: #F0F8FF !important;
+            box-shadow: 0 6px 18px rgba(0, 128, 128, 0.2) !important;
             border: none !important;
+        }}
+
+        [data-testid="stSidebar"] .st-key-sidebar-bottom-group {{
+            margin-bottom: 25px !important;
         }}
 
         /* Circular Action Buttons for Header */
@@ -114,13 +126,13 @@ def inject_global_theme():
             justify-content: center !important;
             background-color: {bg_surface} !important;
             border: 1.5px solid {card_border} !important;
-            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.05) !important;
+            box-shadow: 0 4px 14px rgba(0, 128, 128, 0.2) !important;
             font-size: 1.15rem !important;
             color: {text_primary} !important;
             transition: all 0.2s ease !important;
         }}
         .circle-btn button:hover {{
-            border-color: #4F46E5 !important;
+            border-color: #008080 !important;
             transform: scale(1.05);
         }}
 
@@ -157,7 +169,7 @@ def render_top_header(title: str, subtitle: str):
     with c_title:
         st.markdown(f"""
             <h1 style='font-size: 2.1rem; font-weight: 800; margin: 0; letter-spacing: -0.5px;'>{title}</h1>
-            <p style='color: #64748B; font-size: 0.95rem; margin-top: 4px; margin-bottom: 0;'>{subtitle}</p>
+            <p style='color: #5A7B7B; font-size: 0.95rem; margin-top: 4px; margin-bottom: 0;'>{subtitle}</p>
         """, unsafe_allow_html=True)
 
     with c_actions:
@@ -180,46 +192,53 @@ def render_top_header(title: str, subtitle: str):
     st.markdown("<div style='height: 16px;'></div>", unsafe_allow_html=True)
 
 
+def render_back_button(target_page: str, label: str = "Back"):
+    """Renders a compact back CTA that returns to another routed page."""
+    if st.button(f"← {label}", key=f"back_to_{target_page}"):
+        st.session_state["active_page"] = target_page
+        st.rerun()
+
+
 def render_authenticated_sidebar():
     """Renders the minimal icon-rail with accurate Unicode icons and pinned bottom links."""
     with st.sidebar:
         current_page = st.session_state.get("active_page", "Data Ingestion")
 
-        # Top Group
-        st.container()
+        with st.container(key="sidebar_top_group"):
+            if st.button("🏠", key="nav_home", help="Landing Page"):
+                st.session_state["logged_in"] = False
+                st.session_state["auth_screen"] = "landing"
+                st.query_params.clear()
+                st.rerun()
 
-        # 1. Account Access
-        btn_type = "primary" if current_page == "Account Access" else "secondary"
-        if st.button("👤", key="nav_account", help="Account Access", type=btn_type):
-            st.session_state["active_page"] = "Account Access"
-            st.rerun()
+            btn_type = "primary" if current_page == "Account Access" else "secondary"
+            if st.button("👤", key="nav_account", help="Account Access", type=btn_type):
+                st.session_state["active_page"] = "Account Access"
+                st.rerun()
 
-        # 2. Data Ingestion
-        btn_type = "primary" if current_page == "Data Ingestion" else "secondary"
-        if st.button("📥", key="nav_ingestion", help="Data Ingestion", type=btn_type):
-            st.session_state["active_page"] = "Data Ingestion"
-            st.rerun()
+            btn_type = "primary" if current_page == "Data Ingestion" else "secondary"
+            if st.button("📥", key="nav_ingestion", help="Data Ingestion", type=btn_type):
+                st.session_state["active_page"] = "Data Ingestion"
+                st.rerun()
 
-        # 3. Data Preview
-        btn_type = "primary" if current_page == "Data Preview" else "secondary"
-        if st.button("👁️", key="nav_preview", help="Data Preview", type=btn_type):
-            st.session_state["active_page"] = "Data Preview"
-            st.rerun()
+            btn_type = "primary" if current_page == "Data Preview" else "secondary"
+            if st.button("👁️", key="nav_preview", help="Data Preview", type=btn_type):
+                st.session_state["active_page"] = "Data Preview"
+                st.rerun()
 
-        # 4. Premier Dashboard
-        btn_type = "primary" if current_page == "Premier Dashboard" else "secondary"
-        if st.button("📊", key="nav_dashboard", help="Premier Dashboard", type=btn_type):
-            st.session_state["active_page"] = "Premier Dashboard"
-            st.rerun()
+            btn_type = "primary" if current_page == "Premier Dashboard" else "secondary"
+            if st.button("📊", key="nav_dashboard", help="Premier Dashboard", type=btn_type):
+                st.session_state["active_page"] = "Premier Dashboard"
+                st.rerun()
 
         # Dynamic spacer pinning Settings & Help to the bottom
         st.markdown("<div style='flex-grow: 1; min-height: 180px;'></div>", unsafe_allow_html=True)
-        st.markdown("<hr style='border: 0; border-top: 1px solid #E2E8F0; width: 60%; margin: 6px auto 12px auto;'>", unsafe_allow_html=True)
+        st.markdown("<hr style='border: 0; border-top: 1px solid #E0E0E0; width: 60%; margin: 6px auto 12px auto;'>", unsafe_allow_html=True)
 
-        # Bottom Group: Settings & Help
-        if st.button("⚙️", key="nav_settings", help="Settings & Preferences"):
-            st.toast("Settings opened.")
+        with st.container(key="sidebar_bottom_group"):
+            if st.button("⚙️", key="nav_settings", help="Settings & Preferences"):
+                st.toast("Settings opened.")
 
-        if st.button("❓", key="nav_help", help="Documentation & Support"):
-            st.toast("Help Center opened.")
+            if st.button("❓", key="nav_help", help="Documentation & Support"):
+                st.toast("Help Center opened.")
             

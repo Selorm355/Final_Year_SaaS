@@ -2,6 +2,7 @@ import streamlit as st
 import os
 import user_connection as uc 
 import payment_engine as pe
+import navigation
 
 def inject_custom_css():
     """Reads the CSS file and injects it into Streamlit."""
@@ -137,6 +138,8 @@ def render_dashboard_gatekeeper():
     Checks database subscription tier and trial credits before rendering graphs.
     """
     
+    navigation.render_back_button("Data Preview", "Data Preview")
+
     # Inject custom CSS layout immediately upon page load
     inject_custom_css()
     

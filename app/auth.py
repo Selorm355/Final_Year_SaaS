@@ -97,8 +97,8 @@ def show_login_page():
         st.markdown("""
         <div style="text-align:center; margin-bottom: 1.5rem;">
             <div style="font-size:2.5rem;">🔑</div>
-            <h2 style="color:white; font-weight:700; margin:0;">Welcome Back</h2>
-            <p style="color:rgba(255,255,255,0.5); font-size:0.9rem;">
+            <h2 style="color:#2F4F4F; font-weight:700; margin:0;">Welcome Back</h2>
+            <p style="color:#5A7B7B; font-size:0.9rem;">
                 Sign in to your company workspace
             </p>
         </div>
@@ -142,8 +142,8 @@ def show_login_page():
                     st.error("Please fill in all fields.")
 
         st.markdown("""
-        <div style="text-align:center; color:rgba(255,255,255,0.85); margin-top: 1rem;">
-            Don't have an account? <a href="?action=register" target="_self" style="color:#a855f7; font-weight:700; text-decoration:none;">Sign up</a>
+        <div style="text-align:center; color:#2F4F4F; margin-top: 1rem;">
+            Don't have an account? <a href="?action=register" target="_self" style="color:#008080; font-weight:700; text-decoration:none;">Sign up</a>
         </div>
         """, unsafe_allow_html=True)
 
@@ -199,8 +199,8 @@ def show_register_page():
         st.markdown("""
         <div style="text-align:center; margin-bottom: 1.5rem;">
             <div style="font-size:2.5rem;">🏢</div>
-            <h2 style="color:white; font-weight:700; margin:0;">Create Your Workspace</h2>
-            <p style="color:rgba(255,255,255,0.5); font-size:0.9rem;">
+            <h2 style="color:#2F4F4F; font-weight:700; margin:0;">Create Your Workspace</h2>
+            <p style="color:#5A7B7B; font-size:0.9rem;">
                 Register your company to get started
             </p>
         </div>
@@ -236,8 +236,8 @@ def show_register_page():
                             st.error(db_message)
 
         st.markdown("""
-        <div style="text-align:center; color:rgba(255,255,255,0.85); margin-top: 1rem;">
-            Already have an account? <a href="?action=login" target="_self" style="color:#a855f7; font-weight:700; text-decoration:none;">Log in</a>
+        <div style="text-align:center; color:#2F4F4F; margin-top: 1rem;">
+            Already have an account? <a href="?action=login" target="_self" style="color:#008080; font-weight:700; text-decoration:none;">Log in</a>
         </div>
         """, unsafe_allow_html=True)
 
@@ -256,13 +256,13 @@ def show_user_profile():
         industry_icon = "🛒" if "retail" in industry.lower() else ("🏥" if "health" in industry.lower() else ("🏨" if "hospit" in industry.lower() else "🏢"))
         
         st.markdown(f"""
-        <div style="text-align:center; margin-bottom: 2rem; padding: 2rem; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 16px; box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);">
+        <div style="text-align:center; margin-bottom: 2rem; padding: 2rem; background: #FFFFFF; border: 1px solid #E0E0E0; border-radius: 16px; box-shadow: 0 4px 30px rgba(0, 128, 128, 0.2);">
             <div style="font-size:3.5rem; margin-bottom: 0.5rem;">{industry_icon}</div>
-            <h1 style="color:white; font-weight:700; margin:0; font-size: 2.2rem;">{company_name}</h1>
-            <div style="display: inline-block; margin-top: 0.8rem; padding: 0.3rem 1rem; background: rgba(168, 85, 247, 0.2); border: 1px solid rgba(168, 85, 247, 0.4); border-radius: 50px; color: #d8b4fe; font-size: 0.9rem; font-weight: 600;">
+            <h1 style="color:#2F4F4F; font-weight:700; margin:0; font-size: 2.2rem;">{company_name}</h1>
+            <div style="display: inline-block; margin-top: 0.8rem; padding: 0.3rem 1rem; background: rgba(0, 128, 128, 0.12); border: 1px solid #008080; border-radius: 50px; color: #006666; font-size: 0.9rem; font-weight: 600;">
                 ✨ {industry} Analytics Workspace
             </div>
-            <p style="color:rgba(255,255,255,0.6); font-size:0.95rem; margin-top: 1.2rem; margin-bottom: 0;">
+            <p style="color:#5A7B7B; font-size:0.95rem; margin-top: 1.2rem; margin-bottom: 0;">
                 Your data pipelines, AI forecasting models, and cleaning engines are active and ready.
             </p>
         </div>

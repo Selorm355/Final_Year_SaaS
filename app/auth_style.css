@@ -10,7 +10,7 @@
 section[data-testid="stSidebar"] {display: none;}
 
 [data-testid="stAppViewContainer"] {
-    background: linear-gradient(135deg, #0f172a 0%, #1e1b2e 40%, #3b1f6e 100%) !important;
+    background: #F0F8FF !important;
 }
 [data-testid="stAppViewBlockContainer"] {
     background: transparent !important;
@@ -21,10 +21,10 @@ input[type="text"], input[type="password"], textarea,
 .stTextInput > div > div > input,
 .stTextArea > div > div > textarea,
 div[data-testid="stTextInput"] input {
-    background-color: rgba(255, 255, 255, 0.98) !important;
-    border: 1px solid rgba(168, 85, 247, 0.35) !important;
+    background-color: #FFFFFF !important;
+    border: 1px solid #E0E0E0 !important;
     border-radius: 8px !important;
-    color: #111 !important;
+    color: #2F4F4F !important;
     padding: 0.85rem 1rem !important;
     min-height: 48px !important;
     height: 48px !important;
@@ -35,33 +35,33 @@ div[data-testid="stTextInput"] input {
 }
 .stTextInput > div > div > input::placeholder,
 .stTextArea > div > div > textarea::placeholder {
-    color: rgba(0, 0, 0, 0.45) !important;
+    color: #5A7B7B !important;
 }
 .stTextInput > div > div > input:focus,
 input[type="text"]:focus,
 input[type="password"]:focus,
 .stTextArea > div > div > textarea:focus {
-    border-color: #a855f7 !important;
-    box-shadow: 0 0 0 3px rgba(168,85,247,0.12) !important;
-    background-color: white !important;
-    color: #111 !important;
+    border-color: #008080 !important;
+    box-shadow: 0 0 0 3px rgba(0, 128, 128, 0.2) !important;
+    background-color: #FFFFFF !important;
+    color: #2F4F4F !important;
 }
 .stTextInput > div > div > input:hover,
 input[type="text"]:hover,
 input[type="password"]:hover,
 .stTextArea > div > div > textarea:hover {
-    background-color: rgba(255,255,255,0.98) !important;
-    border-color: #a855f7 !important;
-    color: #111 !important;
+    background-color: #FFFFFF !important;
+    border-color: #008080 !important;
+    color: #2F4F4F !important;
 }
 
 /* --- SELECT BOXES --- */
 .stSelectbox > div > div,
 div[data-baseweb="select"] {
     background-color: transparent !important;
-    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    border: 1px solid #E0E0E0 !important;
     border-radius: 8px !important;
-    color: white !important;
+    color: #2F4F4F !important;
     padding: 0.55rem 0.9rem !important;
     min-height: 48px !important;
     display: flex !important;
@@ -72,8 +72,8 @@ div[data-baseweb="select"] {
 .stSelectbox > div > div:hover,
 .stSelectbox > div > div:focus-within,
 div[data-baseweb="select"]:hover {
-    border-color: #a855f7 !important;
-    background-color: rgba(168,85,247,0.04) !important;
+    border-color: #008080 !important;
+    background-color: rgba(0, 128, 128, 0.12) !important;
 }
 
 /* --- BUTTONS --- */
@@ -89,14 +89,14 @@ div[data-testid="stButton"] > button {
     min-width: 220px !important;
     max-width: 280px !important;
     padding: 0.7rem 1.4rem !important;
-    background: linear-gradient(135deg, #6C63FF, #a855f7) !important;
-    color: white !important;
+    background: #008080 !important;
+    color: #F0F8FF !important;
     border: none !important;
     border-radius: 8px !important;
     font-weight: 700 !important;
     font-size: 1rem !important;
     transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
-    box-shadow: 0 12px 30px rgba(108, 99, 255, 0.22) !important;
+    box-shadow: 0 12px 30px rgba(0, 128, 128, 0.2) !important;
     display: inline-block !important;
     margin-left: auto !important;
     margin-right: auto !important;
@@ -105,40 +105,40 @@ div[data-testid="stButton"] > button {
 .stButton > button:hover,
 div[data-testid="stButton"] > button:hover {
     transform: translateY(-1px) !important;
-    background: linear-gradient(135deg, #7c3aed, #c084fc) !important;
+    background: #006666 !important;
 }
 
 /* --- EXPANDERS & FORMS --- */
 .streamlit-expanderHeader, div[data-testid="stExpanderHeader"] {
-    background: linear-gradient(135deg, #6C63FF, #a855f7) !important;
-    color: white !important;
+    background: #008080 !important;
+    color: #F0F8FF !important;
     border: none !important;
     border-radius: 8px !important;
     padding: 0.75rem 1rem !important;
     font-weight: 700 !important;
 }
 .streamlit-expanderContent {
-    background: rgba(15,23,42,0.92) !important;
-    border: 1px solid rgba(255,255,255,0.08) !important;
+    background: #FFFFFF !important;
+    border: 1px solid #E0E0E0 !important;
     border-top: none !important;
     border-radius: 0 0 16px 16px !important;
     padding: 1rem !important;
-    color: white !important;
+    color: #2F4F4F !important;
 }
 .stForm, div[data-testid="stForm"] {
-    background: linear-gradient(135deg, rgba(15,23,42,0.94), rgba(30,27,46,0.96), rgba(59,31,110,0.98)) !important;
+    background: #FFFFFF !important;
     border-radius: 24px !important;
     padding: 2rem !important;
-    border: 1px solid rgba(168,85,247,0.35) !important;
-    box-shadow: 0 25px 75px rgba(0,0,0,0.25) !important;
-    color: white !important;
+    border: 1px solid #E0E0E0 !important;
+    box-shadow: 0 25px 75px rgba(0, 128, 128, 0.2) !important;
+    color: #2F4F4F !important;
 }
 .stForm > div, div[data-testid="stForm"] > div { background: transparent !important; }
-.stForm label, div[data-testid="stForm"] label { color: white !important; }
+.stForm label, div[data-testid="stForm"] label { color: #2F4F4F !important; }
 
 /* --- LANDING PAGE SPECIFIC --- */
 .landing-wrapper {
-    background: linear-gradient(135deg, #0f172a 0%, #1e1b2e 40%, #3b1f6e 100%);
+    background: #F0F8FF;
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -148,11 +148,11 @@ div[data-testid="stButton"] > button:hover {
     padding: 3rem 2rem;
 }
 .landing-badge {
-    background: rgba(108,99,255,0.2);
-    border: 1px solid rgba(168,85,247,0.4);
+    background: rgba(0, 128, 128, 0.12);
+    border: 1px solid #008080;
     border-radius: 50px;
     padding: 0.4rem 1.4rem;
-    color: #a78bfa;
+    color: #006666;
     font-size: 0.85rem;
     font-weight: 600;
     margin-bottom: 2rem;
@@ -161,12 +161,12 @@ div[data-testid="stButton"] > button:hover {
 .landing-title {
     font-size: 3.5rem;
     font-weight: 800;
-    color: white;
+    color: #2F4F4F;
     line-height: 1.15;
     margin-bottom: 1.2rem;
 }
 .landing-title span {
-    background: linear-gradient(135deg, #6C63FF, #a855f7, #ec4899);
+    background: #008080;
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -174,7 +174,7 @@ div[data-testid="stButton"] > button:hover {
     -webkit-text-fill-color: transparent;
 }
 .landing-subtitle {
-    color: rgba(255,255,255,0.6);
+    color: #5A7B7B;
     font-size: 1.1rem;
     max-width: 520px;
     margin: 0 auto 2rem auto;
@@ -188,11 +188,11 @@ div[data-testid="stButton"] > button:hover {
     margin-bottom: 2.5rem;
 }
 .feature-pill {
-    background: rgba(255,255,255,0.07);
-    border: 1px solid rgba(255,255,255,0.12);
+    background: #FFFFFF;
+    border: 1px solid #E0E0E0;
     border-radius: 50px;
     padding: 0.5rem 1.2rem;
-    color: rgba(255,255,255,0.75);
+    color: #2F4F4F;
     font-size: 0.85rem;
 }
 .btn-row {
@@ -205,9 +205,9 @@ div[data-testid="stButton"] > button:hover {
 .btn-landing {
     display: inline-block;
     padding: 0.85rem 3rem;
-    border: 2px solid white;
+    border: 2px solid #2F4F4F;
     border-radius: 10px;
-    color: white !important;
+    color: #2F4F4F !important;
     font-size: 1.1rem;
     font-weight: 800;
     letter-spacing: 0.08em;
@@ -218,13 +218,13 @@ div[data-testid="stButton"] > button:hover {
     background: transparent;
 }
 .btn-landing:hover {
-    background: rgba(255,255,255,0.1);
-    border-color: #a855f7;
-    color: #a855f7 !important;
+    background: rgba(0, 128, 128, 0.12);
+    border-color: #008080;
+    color: #006666 !important;
     text-decoration: none !important;
 }
 .landing-footer {
-    color: rgba(255,255,255,0.25);
+    color: #5A7B7B;
     font-size: 0.75rem;
     text-align: center;
 }

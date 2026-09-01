@@ -78,7 +78,7 @@ def process_and_upload(df, expected_columns, company_id, industry, filename):
     if save_to_minio(csv_bytes, secure_filename):
         anim_container = st.empty()
         with anim_container.container():
-            st.markdown("<h4 style='text-align: center; color: #0F172A;'>🤖 Automating Pipeline: Cleaning & calculating metrics...</h4>", unsafe_allow_html=True)
+            st.markdown("<h4 style='text-align: center; color: #2F4F4F;'>🤖 Automating Pipeline: Cleaning & calculating metrics...</h4>", unsafe_allow_html=True)
             lottie_processing = load_lottieurl("https://lottie.host/80dc1de6-fa2c-4903-b097-4c40ebcb1e83/8E5qF41K3P.json")
             if lottie_processing:
                 st_lottie(lottie_processing, height=180, key="data_loading")
@@ -97,23 +97,25 @@ def show_ingestion_page():
     company_name = st.session_state.get("company_name", "Enterprise Workspace")
     industry = st.session_state.get("industry", "Retail").capitalize()
 
+    navigation.render_back_button("Account Access", "Account Access")
+
     # Top Header
     navigation.render_top_header(
         title="📥 Data Ingestion Portal",
-        subtitle=f"Workspace: <strong style='color:#0F172A;'>{company_name}</strong> &nbsp;•&nbsp; Schema: <strong style='color:#6C8DFF;'>{industry}</strong>"
+        subtitle=f"Workspace: <strong style='color:#2F4F4F;'>{company_name}</strong> &nbsp;•&nbsp; Schema: <strong style='color:#008080;'>{industry}</strong>"
     )
 
     # --- STEP 1: GUIDELINES & SCHEMA DOWNLOAD ---
     st.markdown(f"""
         <div class="orbit-card">
-            <h3 style="margin-top:0; font-weight:800; font-size:1.15rem; color:#0F172A;">📋 Step 1: Industry Data Guidelines</h3>
-            <p style="color:#64748B; font-size:0.9rem; margin-bottom:14px;">
+            <h3 style="margin-top:0; font-weight:800; font-size:1.15rem; color:#2F4F4F;">📋 Step 1: Industry Data Guidelines</h3>
+            <p style="color:#5A7B7B; font-size:0.9rem; margin-bottom:14px;">
                 Ensure your dataset contains the required fields for the <b>{industry}</b> pipeline:
             </p>
     """, unsafe_allow_html=True)
 
     # Column Chips
-    tags_html = " ".join([f"<span style='background:#EEF2FF; color:#4F46E5; border:1px solid #C7D2FE; font-weight:700; font-size:0.78rem; padding:5px 12px; border-radius:12px; display:inline-block; margin:3px;'>✓ {col}</span>" for col in TEMPLATES[industry]])
+    tags_html = " ".join([f"<span style='background:rgba(0, 128, 128, 0.12); color:#006666; border:1px solid #008080; font-weight:700; font-size:0.78rem; padding:5px 12px; border-radius:12px; display:inline-block; margin:3px;'>✓ {col}</span>" for col in TEMPLATES[industry]])
     st.markdown(f"<div style='margin-bottom:16px;'>{tags_html}</div>", unsafe_allow_html=True)
 
     with st.expander(f"💡 Why do we need these specific {industry} fields?"):
@@ -134,8 +136,8 @@ def show_ingestion_page():
     # --- STEP 2: DROPZONE ---
     st.markdown("""
         <div class="orbit-card">
-            <h3 style="margin-top:0; font-weight:800; font-size:1.15rem; color:#0F172A;">📤 Step 2: Upload File</h3>
-            <p style="color:#64748B; font-size:0.9rem; margin-bottom:16px;">Drag and drop your spreadsheet (.csv or .xlsx, max 10MB)</p>
+            <h3 style="margin-top:0; font-weight:800; font-size:1.15rem; color:#2F4F4F;">📤 Step 2: Upload File</h3>
+            <p style="color:#5A7B7B; font-size:0.9rem; margin-bottom:16px;">Drag and drop your spreadsheet (.csv or .xlsx, max 10MB)</p>
     """, unsafe_allow_html=True)
 
     uploaded_file = st.file_uploader("Upload Data File", type=["csv", "xlsx"], label_visibility="collapsed")
@@ -163,7 +165,7 @@ def show_ingestion_page():
 
         st.markdown("""
             <div class="orbit-card">
-                <h3 style="margin-top:0; font-weight:800; font-size:1.15rem; color:#0F172A;">⚡ Step 3: Validation & Synchronization</h3>
+                <h3 style="margin-top:0; font-weight:800; font-size:1.15rem; color:#2F4F4F;">⚡ Step 3: Validation & Synchronization</h3>
         """, unsafe_allow_html=True)
 
         m1, m2, m3, m4 = st.columns(4)

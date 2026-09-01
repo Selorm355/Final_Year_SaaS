@@ -1,15 +1,15 @@
 [theme]
-# Matches your primary violet gradient
-primaryColor = "#7b2cbf"
+# Primary teal accent
+primaryColor = "#008080"
 
-# Deep, premium dark background
-backgroundColor = "#13131f"
+# Ice White application background
+backgroundColor = "#F0F8FF"
 
-# Slightly lighter shade for sidebar and secondary elements
-secondaryBackgroundColor = "#1e1e2f"
+# Light Gray secondary surface
+secondaryBackgroundColor = "#E0E0E0"
 
-# Crisp white text for maximum readability
-textColor = "#ffffff"
+# Slate Gray text for readability
+textColor = "#2F4F4F"
 
 # Modern, clean sans-serif font
 font = "sans serif"
