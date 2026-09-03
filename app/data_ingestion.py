@@ -40,12 +40,14 @@ COLUMN_DESCRIPTIONS = {
     }
 }
 
+
 def load_lottieurl(url: str):
     try:
         r = requests.get(url, timeout=5)
         return r.json() if r.status_code == 200 else None
     except Exception:
         return None
+
 
 def save_to_minio(file_bytes, filename):
     try:
@@ -58,7 +60,7 @@ def save_to_minio(file_bytes, filename):
         bucket_name = "omnipulse-raw-data"
         try:
             s3.head_bucket(Bucket=bucket_name)
-        except:
+        except Exception:
             s3.create_bucket(Bucket=bucket_name)
 
         s3.upload_fileobj(io.BytesIO(file_bytes), bucket_name, filename)
@@ -67,14 +69,15 @@ def save_to_minio(file_bytes, filename):
         st.error(f"Data Lake Error: {e}")
         return False
 
+
 def process_and_upload(df, expected_columns, company_id, industry, filename):
     final_df = df[expected_columns].copy()
     final_df['company_id'] = company_id
-    
+
     csv_bytes = final_df.to_csv(index=False).encode('utf-8')
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     secure_filename = f"{company_id}_{industry}_{timestamp}_{filename}"
-    
+
     if save_to_minio(csv_bytes, secure_filename):
         anim_container = st.empty()
         with anim_container.container():
@@ -82,30 +85,34 @@ def process_and_upload(df, expected_columns, company_id, industry, filename):
             lottie_processing = load_lottieurl("https://lottie.host/80dc1de6-fa2c-4903-b097-4c40ebcb1e83/8E5qF41K3P.json")
             if lottie_processing:
                 st_lottie(lottie_processing, height=180, key="data_loading")
-        
+
         try:
             process_minio_to_bronze()
             anim_container.empty()
             st.session_state["active_page"] = "Data Preview"
+            st.session_state["sidebar_nav"] = "Data Preview"
             st.rerun()
         except Exception as e:
             anim_container.empty()
             st.error(f"⚠️ Pipeline execution failed: {e}")
 
+
 def show_ingestion_page():
+    if not st.session_state.get("logged_in"):
+        st.error("🚨 Access Denied. Please log in to access the Data Ingestion portal.")
+        return
+
     company_id = st.session_state.get("company_id", "MC-001")
     company_name = st.session_state.get("company_name", "Enterprise Workspace")
     industry = st.session_state.get("industry", "Retail").capitalize()
 
     navigation.render_back_button("Account Access", "Account Access")
 
-    # Top Header
     navigation.render_top_header(
         title="📥 Data Ingestion Portal",
         subtitle=f"Workspace: <strong style='color:#2F4F4F;'>{company_name}</strong> &nbsp;•&nbsp; Schema: <strong style='color:#008080;'>{industry}</strong>"
     )
 
-    # --- STEP 1: GUIDELINES & SCHEMA DOWNLOAD ---
     st.markdown(f"""
         <div class="orbit-card">
             <h3 style="margin-top:0; font-weight:800; font-size:1.15rem; color:#2F4F4F;">📋 Step 1: Industry Data Guidelines</h3>
@@ -114,7 +121,6 @@ def show_ingestion_page():
             </p>
     """, unsafe_allow_html=True)
 
-    # Column Chips
     tags_html = " ".join([f"<span style='background:rgba(0, 128, 128, 0.12); color:#006666; border:1px solid #008080; font-weight:700; font-size:0.78rem; padding:5px 12px; border-radius:12px; display:inline-block; margin:3px;'>✓ {col}</span>" for col in TEMPLATES[industry]])
     st.markdown(f"<div style='margin-bottom:16px;'>{tags_html}</div>", unsafe_allow_html=True)
 
@@ -124,7 +130,7 @@ def show_ingestion_page():
 
     template_df = pd.DataFrame(columns=TEMPLATES[industry])
     template_csv = template_df.to_csv(index=False).encode('utf-8')
-    
+
     st.download_button(
         label=f"⬇️ Download {industry} Template (.csv)",
         data=template_csv,
@@ -133,7 +139,6 @@ def show_ingestion_page():
     )
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # --- STEP 2: DROPZONE ---
     st.markdown("""
         <div class="orbit-card">
             <h3 style="margin-top:0; font-weight:800; font-size:1.15rem; color:#2F4F4F;">📤 Step 2: Upload File</h3>
@@ -143,7 +148,6 @@ def show_ingestion_page():
     uploaded_file = st.file_uploader("Upload Data File", type=["csv", "xlsx"], label_visibility="collapsed")
     st.markdown("</div>", unsafe_allow_html=True)
 
-    # --- STEP 3: VALIDATION & MAPPING ---
     if uploaded_file is not None:
         file_size_mb = uploaded_file.size / (1024 * 1024)
         if file_size_mb > 10.0:
@@ -190,9 +194,9 @@ def show_ingestion_page():
                         f"Which uploaded column matches '{expected_col}'?",
                         options=uploaded_columns,
                         index=default_index,
-                        help=COLUMN_DESCRIPTIONS[industry][expected_col] 
+                        help=COLUMN_DESCRIPTIONS[industry][expected_col]
                     )
-                
+
                 if st.form_submit_button("Confirm Mapping & Ingest Data", type="primary", use_container_width=True):
                     rename_map = {mapping_dict[k]: k for k in mapping_dict}
                     mapped_df = df.rename(columns=rename_map)

@@ -195,6 +195,12 @@ div[data-testid="stButton"] > button:hover {
     color: #2F4F4F;
     font-size: 0.85rem;
 }
+.service-pill {
+    background: #008080;
+    border-color: #008080;
+    color: #F0F8FF;
+    box-shadow: 0 10px 20px rgba(0, 128, 128, 0.18);
+}
 .btn-row {
     display: flex;
     gap: 1.5rem;

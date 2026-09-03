@@ -14,6 +14,7 @@ services:
     environment:
       - DB_HOST=db
       - STREAMLIT_SERVER_FILE_WATCHER_TYPE=poll
+      - STREAMLIT_SERVER_RUN_ON_SAVE=true
 
   db:
     image: postgres:15
