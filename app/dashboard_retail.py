@@ -81,7 +81,7 @@ CUSTOM_CSS = """
         color: #006666;
     }
 
-    /* Chart Containers */
+    /* Chart Containers - Prevent graphs from moving outside */
     .orbit-chart-card {
         background: #FFFFFF;
         border-radius: 15px;
@@ -89,6 +89,9 @@ CUSTOM_CSS = """
         box-shadow: 0 8px 24px rgba(0, 128, 128, 0.15);
         border: 1px solid #E0E0E0;
         margin-bottom: 1.5rem;
+        overflow: hidden !important;
+        position: relative !important;
+        contain: paint !important;
     }
     .chart-header {
         font-size: 1.15rem;
@@ -102,17 +105,58 @@ CUSTOM_CSS = """
         margin-bottom: 16px;
     }
 
+    /* Strict container confinement to prevent graph overflow */
     [data-testid="stPlotlyChart"] {
         width: 100% !important;
         max-width: 100% !important;
         height: 400px !important;
         max-height: 400px !important;
         overflow: hidden !important;
+        position: relative !important;
     }
 
     [data-testid="stPlotlyChart"] > div {
         max-width: 100% !important;
-        overflow: hidden !important;
+        overflow: visible !important;
+    }
+
+    /* Support Fullscreen Expansion */
+    [data-testid="stFullScreenFrame"] [data-testid="stPlotlyChart"] {
+        height: 100% !important;
+        max-height: 100% !important;
+    }
+
+    [data-testid="stElementToolbar"] {
+        opacity: 1 !important;
+        visibility: visible !important;
+        display: flex !important;
+    }
+
+    /* =========================================================
+       MODEBAR POSITIONING & MARGINS (10px bottom, 6px right)
+       ========================================================= */
+    .js-plotly-plot .plotly .modebar {
+        top: 8px !important;
+        right: 8px !important;
+        margin-bottom: 10px !important;
+        margin-right: 8px !important;
+        padding: 4px 6px !important;
+        border-radius: 8px !important;
+        background: rgba(255, 255, 255, 0.9) !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+    }
+
+    .js-plotly-plot .plotly .modebar-btn {
+        margin-right: 4px !important;
+        margin-bottom: 2px !important;
+    }
+
+    .js-plotly-plot .plotly .modebar-btn[data-title="Reset axes"],
+    .js-plotly-plot .plotly .modebar-btn[data-title="Reset axes"]:hover {
+        display: inline-block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        margin-right: 8px !important;
     }
 
     /* =========================================================
@@ -159,6 +203,7 @@ CUSTOM_CSS = """
         border: 1.5px solid #008080 !important;
         border-radius: 15px !important;
         box-shadow: 0 4px 14px rgba(0, 128, 128, 0.35) !important;
+        padding: 8px 15px !important;
     }
     
     /* Clean up dataframe display */
@@ -284,12 +329,36 @@ def render_dashboard(company_id=None):
         paper_bgcolor='#FFFFFF',
         plot_bgcolor='#FFFFFF',
         font=dict(family="Plus Jakarta Sans, sans-serif", color="#5A7B7B", size=12),
-        margin=dict(t=20, l=10, r=10, b=10),
+        margin=dict(t=30, l=10, r=10, b=10),
         height=400,
         xaxis=dict(showgrid=False, zeroline=False),
         yaxis=dict(showgrid=True, gridcolor="#E0E0E0", zeroline=False),
-        hoverlabel=dict(bgcolor="#FFFFFF", font_size=12, font_family="Plus Jakarta Sans")
+        dragmode='pan',
+        hoverlabel=dict(bgcolor="#FFFFFF", font_size=12, font_family="Plus Jakarta Sans"),
+        modebar=dict(
+            orientation='h',
+            bgcolor='rgba(255, 255, 255, 0.85)',
+            color='#5A7B7B',
+            activecolor='#008080'
+        )
     )
+
+    # Chart Config: Disables mouse wheel zooming glitch and adds Pan / Drag scroll navigation
+    chart_config = {
+        'displayModeBar': True,
+        'displaylogo': False,
+        'scrollZoom': False,  # Prevents accidental trackpad / mouse-wheel zooming
+        'modeBarButtons': [
+            ['toImage', 'zoomIn2d', 'zoomOut2d', 'resetScale2d']
+        ],
+        'toImageButtonOptions': {
+            'format': 'png',
+            'filename': 'omnipulse_chart',
+            'height': 500,
+            'width': 850,
+            'scale': 2
+        }
+    }
 
     # === TAB 1: EXECUTIVE OVERVIEW ===
     with tab1:
@@ -332,7 +401,7 @@ def render_dashboard(company_id=None):
             ))
 
         fig_trend.update_layout(**plot_layout_defaults)
-        st.plotly_chart(fig_trend, use_container_width=True, config={'displayModeBar': False})
+        st.plotly_chart(fig_trend, use_container_width=True, config=chart_config)
 
     # === TAB 2: PRODUCT INTELLIGENCE ===
     with tab2:
@@ -354,19 +423,25 @@ def render_dashboard(company_id=None):
             )
             fig_bar.update_layout(**plot_layout_defaults)
             fig_bar.update_traces(marker_line_width=0, marker=dict(cornerradius=6), hovertemplate="<b>%{y}</b><br>Revenue: GH₵ %{x:,.2f}<extra></extra>")
-            st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
+            st.plotly_chart(fig_bar, use_container_width=True, config=chart_config)
             st.markdown('</div>', unsafe_allow_html=True)
 
         with col_right:
-            st.markdown('<div class="orbit-chart-card"><div class="chart-header">Volume Distribution</div><div class="chart-subtitle">Breakdown of total units sold</div>', unsafe_allow_html=True)
-            orbit_colors = ['#008080', '#006666', '#2F4F4F', '#5A7B7B', '#E0E0E0']
+            st.markdown('<div class="orbit-chart-card"><div class="chart-header">Quantity Distribution</div><div class="chart-subtitle">Breakdown of total units sold</div>', unsafe_allow_html=True)
+            # Complete circular pie chart (hole=0)
+            orbit_colors = ['#008080', '#0E9594', '#12B886', '#20C997', '#2F4F4F', '#3D5A5A', '#5A7B7B', '#7A9A9A', '#9BBAB4', '#BBD5D0']
             fig_donut = px.pie(
-                top_10, values='volume', names='item_name', hole=0.6,
+                top_10, values='volume', names='item_name',
                 color_discrete_sequence=orbit_colors
             )
             fig_donut.update_layout(**plot_layout_defaults)
-            fig_donut.update_traces(textposition='inside', textinfo='percent', hovertemplate="<b>%{label}</b><br>Units: %{value}<br>Share: %{percent}<extra></extra>")
-            st.plotly_chart(fig_donut, use_container_width=True, config={'displayModeBar': False})
+            fig_donut.update_traces(
+                textposition='inside',
+                textinfo='percent',
+                marker=dict(line=dict(color='#FFFFFF', width=2)),
+                hovertemplate="<b>%{label}</b><br>Units Sold: %{value:,.0f}<br>Share: %{percent}<extra></extra>"
+            )
+            st.plotly_chart(fig_donut, use_container_width=True, config=chart_config)
             st.markdown('</div>', unsafe_allow_html=True)
 
         st.markdown('<div class="orbit-chart-card"><div class="chart-header">Product Roster & Margin Health</div>', unsafe_allow_html=True)
@@ -402,7 +477,7 @@ def render_dashboard(company_id=None):
                 hovertemplate="<b>%{y}</b><br>Margin: %{x:.1f}%<br>Profit: GH₵ %{text:,.2f}<extra></extra>"
             )
             fig_margin.update_layout(**plot_layout_defaults)
-            st.plotly_chart(fig_margin, use_container_width=True, config={'displayModeBar': False})
+            st.plotly_chart(fig_margin, use_container_width=True, config=chart_config)
             st.markdown('</div>', unsafe_allow_html=True)
 
         with col_matrix:
@@ -416,7 +491,7 @@ def render_dashboard(company_id=None):
             fig_scatter.update_traces(
                 hovertemplate="<b>%{hovertext}</b><br>Margin: %{x:.1f}%<br>Profit: GH₵ %{y:,.2f}<extra></extra>"
             )
-            st.plotly_chart(fig_scatter, use_container_width=True, config={'displayModeBar': False})
+            st.plotly_chart(fig_scatter, use_container_width=True, config=chart_config)
             st.markdown('</div>', unsafe_allow_html=True)
 
     # === TAB 4: OPERATIONAL INTELLIGENCE ===
@@ -434,7 +509,7 @@ def render_dashboard(company_id=None):
             )
             fig_day.update_layout(**plot_layout_defaults)
             fig_day.update_traces(marker=dict(cornerradius=8), hovertemplate="<b>%{x}</b><br>Revenue: GH₵ %{y:,.2f}<extra></extra>")
-            st.plotly_chart(fig_day, use_container_width=True, config={'displayModeBar': False})
+            st.plotly_chart(fig_day, use_container_width=True, config=chart_config)
             st.markdown('</div>', unsafe_allow_html=True)
 
         with col_basket:
@@ -447,7 +522,7 @@ def render_dashboard(company_id=None):
             )
             fig_basket.update_layout(**plot_layout_defaults)
             fig_basket.update_traces(marker=dict(cornerradius=6), hovertemplate="Basket Size: %{x} items<br>Orders: %{y}<extra></extra>")
-            st.plotly_chart(fig_basket, use_container_width=True, config={'displayModeBar': False})
+            st.plotly_chart(fig_basket, use_container_width=True, config=chart_config)
             st.markdown('</div>', unsafe_allow_html=True)
 
 if __name__ == "__main__":

@@ -4,22 +4,22 @@ import os
 import json
 from cryptography.fernet import Fernet
 import user_connection
+from user_profile import show_user_profile
 
 # --- ENCRYPTION SETUP ---
 fernet_secret = os.getenv("FERNET_KEY")
-if not fernet_secret:
-    st.error("🚨 CRITICAL CONFIG ERROR: FERNET_KEY is missing from environment variables.")
-    st.stop()
+cipher_suite = None
 
-FERNET_KEY = fernet_secret.encode()
-cipher_suite = Fernet(FERNET_KEY)
+if fernet_secret:
+    try:
+        cipher_suite = Fernet(fernet_secret.encode())
+    except Exception:
+        cipher_suite = None
 
 # --- Logic: Email Validator ---
 def is_valid_email(email):
     regex = r"^[\w\.-]+@[\w\.-]+\.\w+$"
-    if re.match(regex, email):
-        return True
-    return False
+    return bool(re.match(regex, email))
 
 # --- Logic: Password Complexity Checker ---
 def is_password_strong(password):
@@ -41,14 +41,11 @@ def inject_css():
 
     layout_css = """
     <style>
-        /* 1. Page Canvas & Layout */
         .block-container {
             padding-top: 0.5rem !important;
             padding-bottom: 1rem !important;
             max-width: 1350px !important;
         }
-
-        /* 2. Landing Page Centered Layout */
         .landing-wrapper {
             display: flex !important;
             flex-direction: column !important;
@@ -60,7 +57,6 @@ def inject_css():
             margin: 0 auto !important;
             width: 100% !important;
         }
-
         .landing-badge {
             display: inline-block !important;
             background: rgba(0, 128, 128, 0.12) !important;
@@ -72,7 +68,6 @@ def inject_css():
             color: #006666 !important;
             margin-bottom: 2rem !important;
         }
-
         .landing-title {
             font-size: 4.25rem !important;
             font-weight: 800 !important;
@@ -80,11 +75,9 @@ def inject_css():
             color: #2F4F4F !important;
             margin-bottom: 1.8rem !important;
         }
-
         .landing-title span {
             color: #008080 !important;
         }
-
         .landing-subtitle {
             font-size: 1.02rem !important;
             color: #5A7B7B !important;
@@ -92,7 +85,6 @@ def inject_css():
             margin: 0 auto 1.6rem auto !important;
             line-height: 1.5 !important;
         }
-
         .features-row {
             display: flex !important;
             justify-content: center !important;
@@ -103,7 +95,6 @@ def inject_css():
             margin-bottom: 3.0rem !important;
             width: 100% !important;
         }
-
         .feature-pill.service-pill {
             background-color: #008080 !important;
             color: #FFFFFF !important;
@@ -115,7 +106,6 @@ def inject_css():
             box-shadow: 0 4px 12px rgba(0, 128, 128, 0.18) !important;
             white-space: nowrap !important;
         }
-
         .btn-row {
             display: flex !important;
             justify-content: center !important;
@@ -123,7 +113,6 @@ def inject_css():
             gap: 16px !important;
             margin-bottom: 2rem !important;
         }
-
         .btn-landing {
             background: #FFFFFF !important;
             color: #2F4F4F !important;
@@ -138,19 +127,15 @@ def inject_css():
             transition: all 0.2s ease !important;
             box-shadow: 0 4px 12px rgba(0, 128, 128, 0.08) !important;
         }
-
         .btn-landing:hover {
             background: #008080 !important;
             color: #FFFFFF !important;
             transform: translateY(-2px) !important;
         }
-
         .landing-footer {
             color: #5A7B7B !important;
             font-size: 0.82rem !important;
         }
-
-        /* 3. Wide Container (750px) with Indented Fields (-20px each side) */
         [data-testid="stForm"] {
             max-width: 750px !important;
             margin: 0 auto !important;
@@ -160,24 +145,18 @@ def inject_css():
             border: 1px solid #E2E8F0 !important;
             box-shadow: 0 8px 24px rgba(0, 128, 128, 0.08) !important;
         }
-
-        /* Reduce field length by 20px on both sides */
         [data-testid="stForm"] .stTextInput,
         [data-testid="stForm"] .stSelectbox {
             width: calc(100% - 40px) !important;
             margin-left: 20px !important;
             margin-right: 20px !important;
         }
-
-        /* Submit Button with 20px Side Margins and 20px Margin-Top */
         [data-testid="stForm"] .stFormSubmitButton {
             width: calc(100% - 40px) !important;
             margin-left: 20px !important;
             margin-right: 20px !important;
             margin-top: 20px !important;
         }
-
-        /* Center-Aligned Field Labels */
         [data-testid="stForm"] .stTextInput label,
         [data-testid="stForm"] .stSelectbox label {
             display: flex !important;
@@ -189,30 +168,24 @@ def inject_css():
             font-size: 0.9rem !important;
             margin-bottom: 6px !important;
         }
-
         [data-testid="stForm"] .stTextInput label p,
         [data-testid="stForm"] .stSelectbox label p {
             text-align: center !important;
             width: 100% !important;
         }
-
-        /* Center Typed Text & Placeholders */
         [data-testid="stForm"] .stTextInput input {
             text-align: center !important;
             border-radius: 12px !important;
             border: 1.5px solid #CBD5E1 !important;
-            padding: 10px 42px 10px 42px !important;
+            padding: 10px 42px !important;
             font-size: 1.00rem !important;
             color: #2F4F4F !important;
             height: 45px !important;
         }
-
         [data-testid="stForm"] .stTextInput input::placeholder {
             text-align: center !important;
             color: #94A3B8 !important;
         }
-
-        /* Dropdown selection field styling */
         [data-testid="stForm"] .stSelectbox div[data-baseweb="select"] {
             border-radius: 12px !important;
             border: 1.5px solid #CBD5E1 !important;
@@ -225,12 +198,10 @@ def inject_css():
             box-shadow: none !important;
             transition: all 0.2s ease !important;
         }
-
         [data-testid="stForm"] .stSelectbox div[data-baseweb="select"]:focus-within {
             border-color: #008080 !important;
             box-shadow: 0 0 0 1px #008080 !important;
         }
-
         [data-testid="stForm"] .stSelectbox div[data-baseweb="select"] > div:first-child {
             background-color: transparent !important;
             border: none !important;
@@ -242,7 +213,6 @@ def inject_css():
             height: 100% !important;
             cursor: pointer !important;
         }
-
         [data-testid="stForm"] .stSelectbox input {
             text-align: center !important;
             cursor: pointer !important;
@@ -250,37 +220,30 @@ def inject_css():
             font-size: 1.00rem !important;
             color: #2F4F4F !important;
         }
-
         [data-testid="stForm"] .stSelectbox [data-baseweb="select"] div {
             text-align: center !important;
             justify-content: center !important;
             font-size: 1.00rem !important;
             color: #2F4F4F !important;
         }
-
         [data-testid="stForm"] .stSelectbox input::placeholder,
         [data-testid="stForm"] .stSelectbox [data-baseweb="select"] div[class*="placeholder"] {
             text-align: center !important;
             color: #94A3B8 !important;
             font-size: 1.00rem !important;
         }
-
         [data-testid="stForm"] .stSelectbox [data-baseweb="select"] svg {
             fill: #2F4F4F !important;
             margin-right: 8px !important;
             cursor: pointer !important;
         }
-
         [data-testid="stForm"] div[data-baseweb="input"] button {
             margin-left: auto !important;
             margin-right: 6px !important;
         }
-
-        /* 4. Control "Press Enter to Submit" Instructions */
         [data-testid="stForm"] [data-testid="InputInstructions"] {
             display: none !important;
         }
-
         [data-testid="stForm"] [data-testid="stTextInput"]:has(input[placeholder="Enter your password"]) [data-testid="InputInstructions"],
         [data-testid="stForm"] [data-testid="stTextInput"]:has(input[placeholder="Re-enter password"]) [data-testid="InputInstructions"],
         [data-testid="stForm"] [data-testid="stTextInput"]:has(input[placeholder="Confirm new password"]) [data-testid="InputInstructions"] {
@@ -291,7 +254,6 @@ def inject_css():
             margin-top: 4px !important;
             padding-right: 4px !important;
         }
-
         [data-testid="stForm"] [data-testid="stTextInput"]:has(input[placeholder="Enter your password"]) [data-testid="InputInstructions"] *,
         [data-testid="stForm"] [data-testid="stTextInput"]:has(input[placeholder="Re-enter password"]) [data-testid="InputInstructions"] *,
         [data-testid="stForm"] [data-testid="stTextInput"]:has(input[placeholder="Confirm new password"]) [data-testid="InputInstructions"] * {
@@ -388,14 +350,17 @@ def show_login_page():
                         st.session_state["company_id"] = user_data["company_id"]
                         st.session_state["industry"] = user_data["industry"]
                         st.session_state["company_name"] = user_data["company_name"]
+                        st.session_state["user_email"] = clean_email
                         
-                        token_dict = {
-                            "company_id": user_data["company_id"],
-                            "industry": user_data["industry"],
-                            "company_name": user_data["company_name"]
-                        }
-                        encrypted_token = cipher_suite.encrypt(json.dumps(token_dict).encode()).decode()
-                        st.query_params["token"] = encrypted_token
+                        if cipher_suite:
+                            token_dict = {
+                                "company_id": user_data["company_id"],
+                                "industry": user_data["industry"],
+                                "company_name": user_data["company_name"],
+                                "user_email": clean_email
+                            }
+                            encrypted_token = cipher_suite.encrypt(json.dumps(token_dict).encode()).decode()
+                            st.query_params["token"] = encrypted_token
                         
                         st.session_state["go_to_page"] = "2. Data Ingestion"
                         st.rerun()
@@ -404,7 +369,6 @@ def show_login_page():
                 else:
                     st.error("Please fill in all fields.")
 
-        # Teal Link for Forgot Password and Sign Up Navigation
         st.markdown("""
         <div style="text-align: center; margin-top: 1.2rem; margin-bottom: 0.6rem;">
             <a href="?action=reset" target="_self" style="color: #008080; font-weight: 700; text-decoration: none; font-size: 0.92rem;">
@@ -473,6 +437,7 @@ def show_register_page():
                             clean_reg_company_name, clean_reg_email, reg_industry, reg_password
                         )
                         if success:
+                            st.session_state["user_email"] = clean_reg_email
                             st.success(db_message)
                             st.warning(f"🚨 **CRITICAL: Save your Recovery Key!**\n\n### `{recovery_key}`")
                         else:
@@ -549,47 +514,21 @@ def show_reset_password_page():
         """, unsafe_allow_html=True)
 
 # ============================================
-# SCREEN 5: LOGGED IN PROFILE (Redesigned SaaS Workspace)
-# ============================================
-def show_user_profile():
-    inject_css()
-    st.markdown("<div style='height: 2rem;'></div>", unsafe_allow_html=True)
-    
-    col1, col2, col3 = st.columns([1.5, 2.2, 1.5])
-    with col2:
-        company_name = st.session_state.get('company_name', 'Your Workspace')
-        industry = st.session_state.get('industry', 'Enterprise').capitalize()
-        
-        industry_icon = "🛒" if "retail" in industry.lower() else ("🏥" if "health" in industry.lower() else ("🏨" if "hospit" in industry.lower() else "🏢"))
-        
-        st.markdown(f"""
-        <div style="text-align:center; margin-bottom: 2rem; padding: 2rem; background: #FFFFFF; border: 1px solid #E0E0E0; border-radius: 18px; box-shadow: 0 4px 20px rgba(0, 128, 128, 0.12);">
-            <div style="font-size:3.2rem; margin-bottom: 0.5rem;">{industry_icon}</div>
-            <h1 style="color:#2F4F4F; font-weight:700; margin:0; font-size: 2rem;">{company_name}</h1>
-            <div style="display: inline-block; margin-top: 0.8rem; padding: 0.3rem 1rem; background: rgba(0, 128, 128, 0.12); border: 1px solid #008080; border-radius: 50px; color: #006666; font-size: 0.88rem; font-weight: 600;">
-                ✨ {industry} Analytics Workspace
-            </div>
-            <p style="color:#5A7B7B; font-size:0.92rem; margin-top: 1.2rem; margin-bottom: 0;">
-                Your data pipelines, AI forecasting models, and cleaning engines are active and ready.
-            </p>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        col_btn1, col_btn2 = st.columns(2)
-        with col_btn1:
-            if st.button("🚀 Go to Data Ingestion", use_container_width=True):
-                st.session_state["go_to_page"] = "2. Data Ingestion"
-                st.rerun()
-        with col_btn2:
-            if st.button("Log Out of OmniPulse", use_container_width=True):
-                st.query_params.clear()
-                st.session_state.clear()
-                st.rerun()
-
-# ============================================
 # MAIN ROUTER
 # ============================================
 def show_auth_page(): 
+    if cipher_suite and not st.session_state.get("logged_in") and "token" in st.query_params:
+        try:
+            raw_token = cipher_suite.decrypt(st.query_params["token"].encode()).decode()
+            token_data = json.loads(raw_token)
+            st.session_state["logged_in"] = True
+            st.session_state["company_id"] = token_data.get("company_id")
+            st.session_state["industry"] = token_data.get("industry")
+            st.session_state["company_name"] = token_data.get("company_name")
+            st.session_state["user_email"] = token_data.get("user_email")
+        except Exception:
+            pass
+
     if st.session_state.get("logged_in"):
         show_user_profile() 
         return
