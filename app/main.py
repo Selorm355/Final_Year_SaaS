@@ -43,6 +43,12 @@ if "active_page" not in st.session_state:
 if "sidebar_nav" not in st.session_state:
     st.session_state["sidebar_nav"] = "Data Ingestion"
 
+# Recover sessions created before the dashboard route was named consistently.
+if st.session_state.get("active_page") == "Premier Dashboard":
+    st.session_state["active_page"] = "Premium Dashboard"
+if st.session_state.get("sidebar_nav") == "Premier Dashboard":
+    st.session_state["sidebar_nav"] = "Premium Dashboard"
+
 # --- TOKEN HYDRATOR ---
 if not st.session_state["logged_in"] and "token" in st.query_params:
     try:

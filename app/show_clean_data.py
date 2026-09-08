@@ -5,6 +5,27 @@ from sqlalchemy import create_engine
 import navigation
 
 
+def _preview_column_config(df):
+    currency_terms = ("cost", "price", "revenue", "profit", "fee", "paid", "value", "cogs")
+    column_config = {}
+
+    for column in df.columns:
+        if not pd.api.types.is_numeric_dtype(df[column]):
+            continue
+
+        column_name = column.lower()
+        if any(term in column_name for term in currency_terms):
+            number_format = "GH₵ %,.2f"
+        elif pd.api.types.is_integer_dtype(df[column]):
+            number_format = "%,d"
+        else:
+            number_format = "%,.2f"
+
+        column_config[column] = st.column_config.NumberColumn(format=number_format)
+
+    return column_config
+
+
 def show_data_preview_page():
     navigation.render_back_button("Data Ingestion", "Data Ingestion")
     st.title("🗄️ Data Preview")
@@ -37,7 +58,12 @@ def show_data_preview_page():
         if gold_df.empty:
             st.info("No metrics calculated yet. Please upload data in the Data Ingestion portal.")
         else:
-            st.dataframe(gold_df.drop(columns=['company_id']), use_container_width=True)
+            display_df = gold_df.drop(columns=['company_id'])
+            st.dataframe(
+                display_df,
+                column_config=_preview_column_config(display_df),
+                use_container_width=True
+            )
     except Exception:
         st.error("Waiting for metrics to build...")
 
@@ -54,7 +80,12 @@ def show_data_preview_page():
             if silver_df.empty:
                 st.info("No cleaned data found yet.")
             else:
-                st.dataframe(silver_df.drop(columns=['company_id']), use_container_width=True)
+                display_df = silver_df.drop(columns=['company_id'])
+                st.dataframe(
+                    display_df,
+                    column_config=_preview_column_config(display_df),
+                    use_container_width=True
+                )
         except Exception:
             st.error("Waiting for clean records to build...")
 

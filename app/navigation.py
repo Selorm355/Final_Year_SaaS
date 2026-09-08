@@ -226,9 +226,9 @@ def render_authenticated_sidebar():
                 st.session_state["active_page"] = "Data Preview"
                 st.rerun()
 
-            btn_type = "primary" if current_page == "Premier Dashboard" else "secondary"
-            if st.button("📊", key="nav_dashboard", help="Premier Dashboard", type=btn_type):
-                st.session_state["active_page"] = "Premier Dashboard"
+            btn_type = "primary" if current_page == "Premium Dashboard" else "secondary"
+            if st.button("📊", key="nav_dashboard", help="Premium Dashboard", type=btn_type):
+                st.session_state["active_page"] = "Premium Dashboard"
                 st.rerun()
 
         # Dynamic spacer pinning Settings & Help to the bottom
@@ -237,7 +237,8 @@ def render_authenticated_sidebar():
 
         with st.container(key="sidebar_bottom_group"):
             if st.button("⚙️", key="nav_settings", help="Settings & Preferences"):
-                st.toast("Settings opened.")
+                st.session_state["active_page"] = "Account Access"
+                st.rerun()
 
             if st.button("❓", key="nav_help", help="Documentation & Support"):
                 st.toast("Help Center opened.")
