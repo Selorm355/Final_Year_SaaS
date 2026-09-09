@@ -137,40 +137,88 @@ def authenticate_user(email, company_name, raw_password):
     else:
         return False, None
 
+def update_password(company_id, current_password, new_password):
+    conn = get_connection()
+    cur = conn.cursor(cursor_factory=RealDictCursor)
+
+    try:
+        cur.execute(
+            "SELECT password_hash FROM users WHERE company_id = %s;",
+            (company_id,)
+        )
+        user = cur.fetchone()
+        if not user or not bcrypt.checkpw(
+            current_password.encode('utf-8'), user['password_hash'].encode('utf-8')
+        ):
+            return False, "Current password is incorrect."
+
+        new_password_hash = bcrypt.hashpw(
+            new_password.encode('utf-8'), bcrypt.gensalt()
+        ).decode('utf-8')
+        cur.execute(
+            "UPDATE users SET password_hash = %s WHERE company_id = %s;",
+            (new_password_hash, company_id)
+        )
+        if cur.rowcount != 1:
+            conn.rollback()
+            return False, "Password update failed. Please try again."
+
+        conn.commit()
+        return True, "Password updated successfully."
+    except Exception:
+        conn.rollback()
+        return False, "Password update failed. Please try again."
+    finally:
+        cur.close()
+        conn.close()
+
 # --- 5. THE PASSWORD RESET LOGIC (Case-Insensitive Match) ---
 def reset_password(email, company_name, raw_recovery_key, new_raw_password):
     conn = get_connection()
     cur = conn.cursor(cursor_factory=RealDictCursor)
-    
-    cur.execute("""
-        SELECT * FROM users 
-        WHERE LOWER(email) = LOWER(%s) AND LOWER(company_name) = LOWER(%s);
-    """, (email, company_name))
-    user = cur.fetchone()
-    
-    if not user:
-        cur.close()
-        conn.close()
-        return False, "Invalid Email, Company Name, or Recovery Key."
-        
-    if bcrypt.checkpw(raw_recovery_key.encode('utf-8'), user['recovery_key'].encode('utf-8')):
-        new_hashed_bytes = bcrypt.hashpw(new_raw_password.encode('utf-8'), bcrypt.gensalt())
-        new_password_hash = new_hashed_bytes.decode('utf-8')
-        
+
+    try:
         cur.execute("""
-            UPDATE users 
-            SET password_hash = %s 
+            SELECT company_id, recovery_key FROM users
+            WHERE LOWER(email) = LOWER(%s) AND LOWER(company_name) = LOWER(%s);
+        """, (email.strip(), company_name.strip()))
+        user = cur.fetchone()
+
+        if not user:
+            return False, "Invalid Email, Company Name, or Recovery Key."
+
+        recovery_key = raw_recovery_key.strip().upper()
+        try:
+            key_matches = bcrypt.checkpw(
+                recovery_key.encode('utf-8'), user['recovery_key'].encode('utf-8')
+            )
+        except (ValueError, TypeError):
+            key_matches = False
+
+        if not key_matches:
+            return False, "Invalid Email, Company Name, or Recovery Key."
+
+        new_password_hash = bcrypt.hashpw(
+            new_raw_password.encode('utf-8'), bcrypt.gensalt()
+        ).decode('utf-8')
+        cur.execute("""
+            UPDATE users
+            SET password_hash = %s
             WHERE company_id = %s;
         """, (new_password_hash, user['company_id']))
-        
+
+        if cur.rowcount != 1:
+            conn.rollback()
+            return False, "Password reset failed. Please try again."
+
         conn.commit()
-        cur.close()
-        conn.close()
         return True, "Password successfully reset! You can now log in."
-    else:
+    except Exception:
+        conn.rollback()
+        return False, "Password reset failed. Please try again."
+    finally:
         cur.close()
         conn.close()
-        return False, "Invalid Email, Company Name, or Recovery Key."
 
 # =========================================================
 # --- 6. BILLING & SUBSCRIPTION ENGINE ---

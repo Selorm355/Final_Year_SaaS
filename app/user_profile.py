@@ -2,6 +2,7 @@ import streamlit as st
 import secrets
 import string
 import re
+import user_connection
 
 PROFILE_CSS = """
 <style>
@@ -153,6 +154,7 @@ PROFILE_CSS = """
         color: #FFFFFF !important;
         border: 1.5px solid #008080 !important;
         border-radius: 15px !important;
+        padding: 8px 14px !important;
         box-shadow: 0 4px 14px rgba(0, 128, 128, 0.3) !important;
     }
 </style>
@@ -316,11 +318,24 @@ def show_user_profile():
                 </div>
                 """, unsafe_allow_html=True)
                 with st.form("pwd_change_form"):
-                    st.text_input("Current Password", type="password")
-                    st.text_input("New Password", type="password")
-                    st.text_input("Confirm New Password", type="password")
+                    current_password = st.text_input("Current Password", type="password")
+                    new_password = st.text_input("New Password", type="password")
+                    confirm_password = st.text_input("Confirm New Password", type="password")
                     if st.form_submit_button("Update Password →", use_container_width=True):
-                        st.success("Password updated successfully.")
+                        if not current_password or not new_password or not confirm_password:
+                            st.error("Please fill in all password fields.")
+                        elif new_password != confirm_password:
+                            st.error("New passwords do not match.")
+                        elif len(new_password) < 8:
+                            st.error("New password must be at least 8 characters long.")
+                        else:
+                            updated, message = user_connection.update_password(
+                                company_id, current_password, new_password
+                            )
+                            if updated:
+                                st.success(message)
+                            else:
+                                st.error(message)
 
         with sec2:
             with st.container(border=True):

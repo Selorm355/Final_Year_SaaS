@@ -248,11 +248,11 @@ def sync_mode(source_tab):
         st.session_state[f"mode_{t}"] = val
 
 def sync_date_range(source_tab):
-    val = st.session_state[f"date_{source_tab}"]
-    if isinstance(val, (list, tuple)) and len(val) == 2:
-        st.session_state["dash_date_range"] = val
+    date_range = normalize_date_range(st.session_state[f"date_{source_tab}"])
+    if date_range is not None:
+        st.session_state["dash_date_range"] = date_range
         for t in TABS:
-            st.session_state[f"date_{t}"] = val
+            st.session_state[f"date_{t}"] = date_range
 
 def sync_month_start(source_tab):
     val = st.session_state[f"m_start_{source_tab}"]
@@ -265,6 +265,32 @@ def sync_month_end(source_tab):
     st.session_state["dash_end_month"] = val
     for t in TABS:
         st.session_state[f"m_end_{t}"] = val
+
+def normalize_date_range(value):
+    if isinstance(value, (list, tuple)):
+        if len(value) != 2 or value[0] is None or value[1] is None:
+            return None
+        start_date, end_date = value
+    elif value is not None:
+        start_date = end_date = value
+    else:
+        return None
+
+    try:
+        return pd.Timestamp(start_date).date(), pd.Timestamp(end_date).date()
+    except (TypeError, ValueError):
+        return None
+
+def is_valid_date_range(value, min_date, max_date):
+    date_range = normalize_date_range(value)
+    if date_range is None:
+        return False
+    start_date, end_date = date_range
+    return (
+        min_date <= start_date <= max_date
+        and min_date <= end_date <= max_date
+        and start_date <= end_date
+    )
 
 def render_dashboard(company_id=None):
     # Injected inside render_dashboard so CSS is refreshed on every rerun
@@ -294,7 +320,9 @@ def render_dashboard(company_id=None):
     # --- Initialize Master Filter State ---
     if "dash_filter_mode" not in st.session_state:
         st.session_state["dash_filter_mode"] = "⚡ Full History"
-    if "dash_date_range" not in st.session_state:
+    if not is_valid_date_range(
+        st.session_state.get("dash_date_range"), min_date, max_date
+    ):
         st.session_state["dash_date_range"] = (min_date, max_date)
     if "dash_start_month" not in st.session_state:
         st.session_state["dash_start_month"] = month_options[0]
@@ -307,7 +335,9 @@ def render_dashboard(company_id=None):
     for t in TABS:
         if f"mode_{t}" not in st.session_state:
             st.session_state[f"mode_{t}"] = st.session_state["dash_filter_mode"]
-        if f"date_{t}" not in st.session_state:
+        if not is_valid_date_range(
+            st.session_state.get(f"date_{t}"), min_date, max_date
+        ):
             st.session_state[f"date_{t}"] = st.session_state["dash_date_range"]
         if f"m_start_{t}" not in st.session_state:
             st.session_state[f"m_start_{t}"] = st.session_state["dash_start_month"]
@@ -336,12 +366,8 @@ def render_dashboard(company_id=None):
             (filtered_df['transaction_date'].dt.to_period('M') >= p_min) & 
             (filtered_df['transaction_date'].dt.to_period('M') <= p_max)
         ]
-    if filtered_df.empty:
-        active_df = df
-        filter_warning = True
-    else:
-        active_df = filtered_df
-        filter_warning = False
+    active_df = filtered_df.copy()
+    filter_warning = active_df.empty and current_mode != "⚡ Full History"
 
     # --- Calculations from Active (Filtered) Data ---
     total_revenue = active_df['total_sale_value'].sum()
@@ -520,7 +546,7 @@ def render_dashboard(company_id=None):
                                 label_visibility="collapsed"
                             )
         if filter_warning:
-            st.warning("⚠️ No records matched this precise window. Displaying all available records.")
+            st.warning("⚠️ No records matched this precise window.")
 
     # === TAB 1: EXECUTIVE OVERVIEW ===
     with tab1:
